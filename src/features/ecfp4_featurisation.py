@@ -10,7 +10,8 @@ def smiles_to_ecfp4(smiles_string):
         return None
     else:
         ecfp4 = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
-        return list(map(int, ecfp4.ToBitString()))  # Convert the BitVector to a Python list of ints
+        ecfp4 = list(map(int, ecfp4.ToBitString()))  # Convert the BitVector to a Python list of ints
+        return ''.join(map(str, ecfp4))  # Convert the list of ints to a string
 
 def main():
     # Initialize parser
@@ -28,8 +29,9 @@ def main():
     # Apply the function to df
     df['ECFP4'] = df['smiles'].apply(smiles_to_ecfp4)
 
-    # Remove variables with NA for molecule
-    df.drop(df[df['ECFP4'] == None].index, inplace=True)
+    # Remove variables with NA or empty string for molecule
+    df.dropna(subset=['ECFP4'], inplace=True)
+    df.drop(df[df['ECFP4'] == ''].index, inplace=True)
 
     # Get the base name of the csv file path
     base_name = os.path.basename(args.file_path)  # Get the base name
@@ -37,6 +39,9 @@ def main():
 
     # Save the df to interim
     df.to_csv(f'data/interim/{csv_name}_ecfp4.csv', index=False)
+
+    # Display the number of smiles successfully converted
+    print(f"Converted {len(df)} smiles to ECFP4")
 
 if __name__ == '__main__':
     main()
