@@ -3,10 +3,10 @@
 ![Python Version](https://img.shields.io/badge/python-3.7-blue)
 ![Project Status](https://img.shields.io/badge/status-alpha-red)
 
-## Overview
+## 🔎 Overview
 We are building FS-Tox: a toxicity benchmark for *in vivo* small molecule toxicology assays. Toxicity prediction tasks differ from traditional machine learning tasks in that there are usually only a small number of training examples per toxicity assay. Here, we are creating a benchmarking tool built using several publicly available toxicity datasets (e.g. EPA's ToxRefDB). We will incorporate the different in vivo assays from these datsets consisting of the molecular representation of a small molecule, with an associated binary marker of whether the drug was toxic or not for the given assay.
 
-## Roadmap
+## 🗺️ Roadmap
 ### Mid-May 2023 - benchmark SOTA models
 We will test the performance of the following state-of-the-art few-shot prediction methods: 
 - [x] Gradient Boosted Random Forest on ECFP4 fingerprints
@@ -42,7 +42,7 @@ Incorporate *in vitro* assays into the FS-Tox benchmark:
 - [] Extended Tox21
 - [] NCI60 data
 
-## Project Organization
+## 📂 Project Organization
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
@@ -89,6 +89,6 @@ Incorporate *in vitro* assays into the FS-Tox benchmark:
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
-## Resources
+## 📚 Resources
 1. [ToxRefDB version 2.0: Improved utility for predictive and retrospective toxicology analyses](https://pubmed.ncbi.nlm.nih.gov/31340180/)
 2. [ChemGPT: a transformer model for generative molecular modeling](https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orp/resource/item/627bddd544bdd532395fb4b5/original/neural-scaling-of-deep-chemical-models.pdf) 
