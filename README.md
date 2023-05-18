@@ -9,7 +9,7 @@ We are building FS-Tox: a toxicity benchmark for *in vivo* small molecule toxico
 ## 🗺️ Roadmap
 ### Mid-May 2023 - benchmark SOTA models
 We will test the performance of the following state-of-the-art few-shot prediction methods: 
-- [x] Gradient Boosted Random Forest on ECFP4 fingerprints
+- [x] Gradient Boosted Random Forest (XGBoost)
 - [] Text-embedding-ada-002 on SMILES (OpenAI)
 - [] Galactica 125M (Hugging Face)
 - [] Galactica 1.3B (Hugging Face)
