@@ -3,7 +3,7 @@ import pandas as pd
 import argparse
 import os
 
-# Convert SMILES column to ECFP4
+# Convert SMILES column to ECFP4 bitstring
 def smiles_to_ecfp4(smiles_string):
     mol = MolFromSmiles(smiles_string)
     if mol is None:  # If RDKit couldn't parse the SMILES string
@@ -12,6 +12,13 @@ def smiles_to_ecfp4(smiles_string):
         ecfp4 = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=1024)
         ecfp4 = list(map(int, ecfp4.ToBitString()))  # Convert the BitVector to a Python list of ints
         return ''.join(map(str, ecfp4))  # Convert the list of ints to a string
+    
+# Convert from pd.Series of ECFP4 bitstrings to pd.DataFrame of ints
+def ecfp4_to_ints(ecfp4_series):
+
+     # Convert each bit of bitstring to feature
+    return ecfp4_series.apply(lambda x: pd.Series(list(x))).astype(int)
+
 
 def main():
     # Initialize parser
