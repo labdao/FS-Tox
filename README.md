@@ -1,6 +1,6 @@
 # FS-Tox: An *In Vivo* Toxicity Benchmark
 ![License](https://img.shields.io/github/license/sethhowes/fs-tox)
-![Python Version](https://img.shields.io/badge/python-3.7-blue)
+![Python Version](https://img.shields.io/badge/python-3.11-blue)
 ![Project Status](https://img.shields.io/badge/status-alpha-red)
 
 ## 🔎 Overview
