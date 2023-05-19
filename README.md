@@ -8,7 +8,7 @@ We are building FS-Tox: a toxicity benchmark for *in vivo* small molecule toxico
 
 ## 🗺️ Roadmap
 ### Mid-May 2023 - benchmark SOTA models
-We will test the performance of the following state-of-the-art few-shot prediction methods: 
+Test the performance of the following state-of-the-art few-shot prediction methods: 
 - [x] Gradient Boosted Random Forest (XGBoost)
 - [] Text-embedding-ada-002 on SMILES (OpenAI)
 - [] Galactica 125M (Hugging Face)
@@ -20,13 +20,13 @@ We will test the performance of the following state-of-the-art few-shot predicti
 - [] MoLeR (Microsoft)
 
 ### Late-May 2023 - create FS-Tox benchmarking tool
-We will incorporate the following datsets containing results from *in vivo* toxicity assays:
+Incorporate the following datsets containing results from *in vivo* toxicity assays:
 - [] ToxRefDB (subacute and chronic toxicity)
 - [] TDCommon, Zhu 2009 (acute toxicity)
 - [] MEIC (small, curated clinical toxicity)
 
 ### Early-June 2023 - benchmark SOTA small molecule language models on FS-Tox
-We will test the following language models on the FS-Tox benchmark:
+Test the following language models on the FS-Tox benchmark:
 - [] Text-embedding-ada-002 on SMILES (OpenAI)
 - [] Galactica 125M (Hugging Face)
 - [] Galactica 1.3B (Hugging Face)
