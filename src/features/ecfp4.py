@@ -43,17 +43,10 @@ def main(input_filepath, output_filepath, bits):
 
     # Connect to a database in memory
     connection = duckdb.connect(database=":memory:")
-    # df = connection.execute(
-    # f"""
-    # SELECT DISTINCT canonical_smiles
-    # FROM '{file_path}*.parquet'
-    # """, file_path
-    # ).df()
-
     df = connection.execute(
-    """
+    f"""
     SELECT DISTINCT canonical_smiles
-    FROM '/Users/sethhowes/Desktop/FS-Tox/data/processed/*tox21_2023.parquet'
+    FROM '{input_filepath}*.parquet'
     """
     ).df()
     
