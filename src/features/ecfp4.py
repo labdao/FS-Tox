@@ -67,7 +67,7 @@ def main(input_filepath, output_filepath, bits):
     # Save the ECFP4 fingerprints to a parquet file
     df.to_parquet(f"{output_filepath}/ecfp4_{bits}.parquet")
 
-    logger.info("%d SMILES successfully converted.", num_success)
+    logger.info("%d SMILES successfully converted to ECFP4.", num_success)
     logger.info("%d SMILES could not be converted to ECFP4",num_parse_err) if num_parse_err > 0 else None
 
 
