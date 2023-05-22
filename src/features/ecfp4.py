@@ -28,7 +28,8 @@ def smiles_to_ecfp4(smiles_string, nBits):
 
 
 @click.command()
-@click.argument("file_path", type=str, help="Path to the directory of assays")
+@click.argument('input_filepath', type=click.Path(exists=True))
+@click.argument('output_filepath', type=click.Path())
 @click.option(
     "-b",
     "--bits",
@@ -36,19 +37,26 @@ def smiles_to_ecfp4(smiles_string, nBits):
     type=int,
     help="Length of the ECFP4 fingerprint bitstring",
 )
-def main(file_path, bits):
+def main(input_filepath, output_filepath, bits):
     logger = logging.getLogger(__name__)
     logger.info("making final data set from raw data")
 
-    # Read in data
     # Connect to a database in memory
     connection = duckdb.connect(database=":memory:")
+    # df = connection.execute(
+    # f"""
+    # SELECT DISTINCT canonical_smiles
+    # FROM '{file_path}*.parquet'
+    # """, file_path
+    # ).df()
+
     df = connection.execute(
-    f"""
+    """
     SELECT DISTINCT canonical_smiles
-    FROM '{file_path}*.parquet'
-    """, file_path
+    FROM '/Users/sethhowes/Desktop/FS-Tox/data/processed/*tox21_2023.parquet'
+    """
     ).df()
+    
 
     # Apply the function to df
     df["ECFP4"] = df["canonical_smiles"].apply(lambda x: smiles_to_ecfp4(x, bits))
@@ -63,15 +71,15 @@ def main(file_path, bits):
     # Get number of successful conversions
     num_success = len(df)
 
-    logger.info(
-        """%d SMILES successfully converted.
-    %d SMILES could not be converted to ECFP4""",
-        num_success,
-        num_parse_err,
-    )
+    # Save the ECFP4 fingerprints to a parquet file
+    df.to_parquet(f"{output_filepath}/ecfp4_{bits}.parquet")
+
+    logger.info("%d SMILES successfully converted.", num_success)
+    logger.info("%d SMILES could not be converted to ECFP4",num_parse_err) if num_parse_err > 0 else None
 
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     main()
+    

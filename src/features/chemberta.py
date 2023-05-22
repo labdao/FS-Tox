@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModel
 import torch
 
+import click
 import logging
 
 def chemberta_encode(smiles):
@@ -21,6 +22,8 @@ def chemberta_encode(smiles):
 
     return embedding
 
+@click.command()
+@click.argument('input_filepath', type=click.Path(exists=True))
 def main():
     logger = logging.getLogger(__name__)
 
