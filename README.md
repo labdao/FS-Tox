@@ -10,10 +10,10 @@ We are building FS-Tox: a toxicity benchmark for *in vivo* small molecule toxico
 ### Mid-May 2023 - benchmark SOTA models
 Test the performance of the following state-of-the-art few-shot prediction methods on existing toxicity benchmark: 
 - [x] Gradient Boosted Random Forest (XGBoost)
-- [] Text-embedding-ada-002 on SMILES (OpenAI)
+- [x] Text-embedding-ada-002 on SMILES (OpenAI)
 - [] Galactica 125M (Hugging Face)
 - [] Galactica 1.3B (Hugging Face)
-- [] ChemGPT 19M (Hugging Face)
+- [x] ChemGPT 19M (Hugging Face)
 - [] ChemGPT 1.2B (Hugging Face)
 - [] Uni-Mol (docker)
 - [] Uni-Mol+ (docker)
