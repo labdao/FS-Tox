@@ -64,6 +64,10 @@ def main(input_filepath, output_filepath):
     # Get the embedding of a SMILES string
     embeddings_list = chemberta_encode(smiles_list)
 
+    print(embeddings_list.shape)
+    print(type(embeddings_list))
+    print(embeddings_list[0]))
+
     # Create a pandas dataframe to store the SMILES strings and embeddings
     df = pd.DataFrame(
         list(zip(smiles_list, embeddings_list)), columns=["smiles", "embeddings"]

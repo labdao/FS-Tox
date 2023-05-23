@@ -49,7 +49,7 @@ def main(input_filepath, output_filepath):
     smiles = connection.execute(
         f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/*clintox_2023.parquet'
+    FROM '{input_filepath}/array_*.parquet'
     """
     ).fetchall()
 
