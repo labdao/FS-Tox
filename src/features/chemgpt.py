@@ -47,9 +47,9 @@ def main(input_filepath, output_filepath):
 
     # Load the data into the database as list of tuples
     smiles = connection.execute(
-    f"""
+        f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/assay_*.parquet'
+    FROM '{input_filepath}/*clintox_2023.parquet'
     """
     ).fetchall()
 
@@ -62,11 +62,24 @@ def main(input_filepath, output_filepath):
     # Convert tensor to list of lists (each sub-list is an embedding)
     embeddings_list = embeddings.numpy().tolist()
 
-    # Create a pandas dataframe to store the SMILES strings and embeddings
-    df = pd.DataFrame(list(zip(smiles_list, embeddings_list)), columns=['smiles', 'embeddings'])
+    # Create column names
+    embedding_names = [
+        "embedding_" + str(i + 1) for i in range(len(embeddings_list[0]))
+    ]
+
+    # Convert list of embeddings to DataFrame where each element of the list becomes a separate column
+    embeddings_df = pd.DataFrame(embeddings_list, columns=embedding_names)
+
+    # # Add the SMILES strings to the DataFrame
+    embeddings_df["smiles"] = smiles_list
+
+    # Rearrange the columns so that 'smiles' column comes first
+    embeddings_df = embeddings_df[
+        ["smiles"] + [col for col in embeddings_df.columns if col != "smiles"]
+    ]
 
     # Save the dataframe as a parquet file
-    df.to_parquet(f"{output_filepath}/chemgpt_embeddings.parquet")
+    embeddings_df.to_parquet(f"{output_filepath}/chemgpt_embeddings.parquet")
 
 
 if __name__ == "__main__":
