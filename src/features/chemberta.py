@@ -52,7 +52,7 @@ def main(input_filepath, output_filepath):
     smiles = connection.execute(
         f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/assay_*.parquet'
+    FROM '{input_filepath}/array_*.parquet'
     """
     ).fetchall()
 
@@ -64,17 +64,25 @@ def main(input_filepath, output_filepath):
     # Get the embedding of a SMILES string
     embeddings_list = chemberta_encode(smiles_list)
 
-    print(embeddings_list.shape)
-    print(type(embeddings_list))
-    print(embeddings_list[0]))
+    # Create column names
+    embedding_names = [
+        "embedding_" + str(i + 1) for i in range(len(embeddings_list[0]))
+    ]
 
-    # Create a pandas dataframe to store the SMILES strings and embeddings
-    df = pd.DataFrame(
-        list(zip(smiles_list, embeddings_list)), columns=["smiles", "embeddings"]
-    )
+    # Convert list of embeddings to DataFrame where each element of the list becomes a separate column
+    embeddings_df = pd.DataFrame(embeddings_list, columns=embedding_names)
+
+    # # Add the SMILES strings to the DataFrame
+    embeddings_df["smiles"] = smiles_list
+
+    # Rearrange the columns so that 'smiles' column comes first
+    embeddings_df = embeddings_df[
+        ["smiles"] + [col for col in embeddings_df.columns if col != "smiles"]
+    ]
 
     # Save the dataframe as a parquet file
-    df.to_parquet(f"{output_filepath}/chemberta_embeddings.parquet")
+    embeddings_df.to_parquet(f"{output_filepath}/chemberta_embeddings.parquet")
+
 
 
 if __name__ == "__main__":
