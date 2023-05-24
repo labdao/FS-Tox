@@ -14,29 +14,35 @@ feature_dict = {
     "ecfp4": "ecfp4_1024",
 }
 
+
 # ASSUMING 1 FEATURE
 def load_data(input_filepath, features, dataset):
     # Connect to a database in memory
     connection = duckdb.connect(database=":memory:")
 
-    # Set table 1 filepath
-    table_1 = f"{input_filepath}/*{dataset}.parquet"
+    # @TODO Change back to normal filepath after testing
+    table_1 = "/Users/sethhowes/Desktop/FS-Tox/data/processed/APR_Hepat_Apoptosis_48hr_up_toxcast_2023.parquet"
+    # # Set table 1 filepath
+    # table_1 = f"{input_filepath}/*{dataset}.parquet"
 
     # Set table 2 filepath
     table_2 = f"{input_filepath}/{feature_dict[features]}.parquet"
 
     df = connection.execute(
-        f"""
-    SELECT DISTINCT canonical_smiles, embeddings AS {feature_dict[features]}, ground_truth
+    f"""
+    SELECT *
     FROM '{table_1}' AS table_1 INNER JOIN '{table_2}' AS table_2 ON (table_1.canonical_smiles = table_2.smiles)
     """
     ).df()
+
+    # Select ground_truth column and all columns beginning with "embedding_"
+    df = df.filter(regex="^(ground_truth|embedding_)")
 
     return df
 
 
 # ASSUMING ONE FEATURE
-def param_search(X_train, y_train, features):
+def param_search(X_train, y_train):
     # Define the parameters for the XGBoost model
     param_grid = {
         "max_depth": [3, 4, 5, 6, 7, 8, 9],
@@ -67,12 +73,9 @@ def param_search(X_train, y_train, features):
 
 
 def model_fit_predict(X_train, X_test, y_train, best_params):
-
     # Train the XGBoost model with the best parameters
     num_round = 20
-    model = xgb.XGBClassifier(
-        **best_params, eval_metric="logloss"
-    )
+    model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
     model.fit(X_train, y_train)
 
     # Train the XGBoost model with the best parameters
@@ -100,7 +103,7 @@ def main(input_filepath, output_filepath, features, dataset):
     df = load_data(input_filepath, features, dataset)
 
     # Get the features
-    X = df[feature_dict[features]]
+    X = df.drop("ground_truth", axis=1)
 
     # Get the label
     y = df["ground_truth"]
@@ -111,12 +114,17 @@ def main(input_filepath, output_filepath, features, dataset):
     )
 
     # Conduct hyperparameter search
-    best_params = param_search(X_train, y_train, features)
+    best_params = param_search(X_train, y_train)
 
     # Predict using best parameters
     preds_proba, preds = model_fit_predict(X_train, X_test, y_train, best_params)
 
-    print(preds)
+    # Create a dataframe with the predictions
+    preds_df = pd.DataFrame({"preds_proba": preds_proba, "preds": preds, "ground_truth": y_test})
+
+    # Save the predictions to a csv file
+    preds_df.to_csv(f"{output_filepath}/preds.csv", index=False)
+
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
