@@ -17,9 +17,6 @@ def chemgpt_encode(smiles):
     # Encode the SMILES string
     inputs = tokenizer(smiles, return_tensors="pt", padding=True, truncation=True)
 
-    # @follow-up Warning message: Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
-    # Really not sure of the rationale behind these parameters, need to check they make sense
-
     # Feed the inputs to the model
     with torch.no_grad():  # disable gradient calculations to save memory
         outputs = model(**inputs)
@@ -29,8 +26,6 @@ def chemgpt_encode(smiles):
 
     # Take the average of the hidden states for each token of the SMILES string
     average_embeddings = torch.mean(hidden_states, dim=1)
-
-    # @follow-up I'm not sure if this is the best way to get the embedding of the whole SMILES string
 
     return average_embeddings
 
