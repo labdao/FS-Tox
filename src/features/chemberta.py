@@ -15,9 +15,6 @@ def chemberta_encode(smiles_list):
     # Create a list to store the embeddings
     embeddings = []
 
-    # @follow-up this code is much slower than the ChemGPT version as iterating instead of batching inputs??
-    # More efficient way to process this?
-
     for smiles in smiles_list:
         # Tokenize the SMILES string and get the input IDs
         input_id = tokenizer.encode(
@@ -28,10 +25,13 @@ def chemberta_encode(smiles_list):
         with torch.no_grad():
             outputs = model(input_id)
 
-        # Take the hidden state of the [CLS] token (first token) as the embedding of the whole SMILES string
-        tensor_embedding = outputs[0][0, 0]
+       # Get the hidden states of the last layer for all tokens
+        tensor_embeddings = outputs[0][0]
 
-        embedding = tensor_embedding.tolist()
+        # Compute the mean along the dimension corresponding to the tokens (dimension 0)
+        average_tensor_embedding = tensor_embeddings.mean(dim=0)
+
+        embedding = average_tensor_embedding.tolist()
 
         # Append the embedding to the list
         embeddings.append(embedding)
@@ -52,7 +52,7 @@ def main(input_filepath, output_filepath):
     smiles = connection.execute(
         f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/array_*.parquet'
+    FROM '{input_filepath}/assay_*.parquet'
     """
     ).fetchall()
 
