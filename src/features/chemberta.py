@@ -73,16 +73,17 @@ def main(input_filepath, output_filepath):
     embeddings_df = pd.DataFrame(embeddings_list, columns=embedding_names)
 
     # # Add the SMILES strings to the DataFrame
-    embeddings_df["smiles"] = smiles_list
+    embeddings_df["canonical_smiles"] = smiles_list
 
     # Rearrange the columns so that 'smiles' column comes first
     embeddings_df = embeddings_df[
-        ["smiles"] + [col for col in embeddings_df.columns if col != "smiles"]
+        ["canonical_smiles"] + [col for col in embeddings_df.columns if col != "canonical_smiles"]
     ]
 
     # Save the dataframe as a parquet file
-    embeddings_df.to_parquet(f"{output_filepath}/chemberta_embeddings.parquet")
+    embeddings_df.to_parquet(f"{output_filepath}/feature_chemberta_embeddings.parquet")
 
+    logger.info("emeddings written to %s", output_filepath)
 
 
 if __name__ == "__main__":

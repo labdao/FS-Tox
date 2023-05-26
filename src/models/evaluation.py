@@ -13,7 +13,7 @@ from sklearn.metrics import (
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
-@click.option("--metrics", default="auc")
+@click.option("-m", "--metrics", default="auc")
 def main(input_filepath, output_filepath, metrics):
     logger = logging.getLogger(__name__)
     logger.info(f"Reading data from {input_filepath}...")
