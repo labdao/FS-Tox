@@ -1,4 +1,6 @@
-from transformers import AutoTokenizer, AutoModel
+import transformers
+transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
+
 import torch
 
 import duckdb
@@ -9,8 +11,8 @@ import logging
 
 def chemberta_encode(smiles_list):
     # Load pre-trained model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
-    model = AutoModel.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
+    tokenizer = transformers.AutoTokenizer.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
+    model = transformers.AutoModel.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
 
     # Create a list to store the embeddings
     embeddings = []

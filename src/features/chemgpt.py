@@ -1,5 +1,6 @@
 import torch
-from transformers import AutoTokenizer, AutoModel
+import transformers
+transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
 
 import logging
 import pandas as pd
@@ -8,8 +9,8 @@ import duckdb
 
 
 def chemgpt_encode(smiles):
-    tokenizer = AutoTokenizer.from_pretrained("ncfrey/ChemGPT-4.7M")
-    model = AutoModel.from_pretrained("ncfrey/ChemGPT-4.7M")
+    tokenizer = transformers.AutoTokenizer.from_pretrained("ncfrey/ChemGPT-4.7M")
+    model = transformers.AutoModel.from_pretrained("ncfrey/ChemGPT-4.7M")
 
     # Adding a padding token
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
@@ -78,6 +79,6 @@ def main(input_filepath, output_filepath):
 
 
 if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     main()
