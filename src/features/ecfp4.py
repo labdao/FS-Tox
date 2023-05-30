@@ -61,6 +61,16 @@ def main(input_filepath, output_filepath, bits):
     df.dropna(subset=["ECFP4"], inplace=True)
     df.drop(df[df["ECFP4"] == ""].index, inplace=True)
 
+    # Convert each ECFP4 so that each bit is a column
+    df_ecfp4_bits = pd.DataFrame(df['ECFP4'].apply(list).tolist()).astype(int)
+    df_ecfp4_bits.columns = [f'bit_{i}' for i in range(df_ecfp4_bits.shape[1])]
+
+    # Concatenate original df with df_ecfp4_bits
+    df = pd.concat([df.reset_index(drop=True), df_ecfp4_bits], axis=1)
+
+    # Drop the ECFP4 column
+    df.drop(columns=['ECFP4'], inplace=True)
+
     # Get number of successful conversions
     num_success = len(df)
 

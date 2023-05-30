@@ -1,6 +1,5 @@
 import pandas as pd
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import RandomizedSearchCV
 
 import os
@@ -45,21 +44,21 @@ def load_features(input_filepath, features):
     joined_dfs = dfs[0].copy()
 
     # Ensure 'smiles' column is of type string
-    joined_dfs['smiles'] = joined_dfs['smiles'].astype(str)
+    joined_dfs['canonical_smiles'] = joined_dfs['canonical_smiles'].astype(str)
 
     # Inner join with the rest of the dataframes
     for i, df in enumerate(dfs[1:], start=1):
         # Ensure 'smiles' column is of type string
-        df['smiles'] = df['smiles'].astype(str)
+        df['canonical_smiles'] = df['canonical_smiles'].astype(str)
         
         # Create a copy of df to avoid modifying the original dataframe
         df_copy = df.copy()
 
         # Modify the column names in the copy to include a unique identifier
-        df_copy.columns = [f"{col}_{i}" if col != 'smiles' else col for col in df_copy.columns]
+        df_copy.columns = [f"{col}_{i}" if col != 'canonical_smiles' else col for col in df_copy.columns]
 
         # Perform the join
-        joined_dfs = joined_dfs.join(df_copy.set_index('smiles'), on='smiles', how='inner')
+        joined_dfs = joined_dfs.join(df_copy.set_index('canonical_smiles'), on='canonical_smiles', how='inner')
 
     # Return the resultant dataframe
     return joined_dfs
@@ -92,7 +91,12 @@ def load_assays(input_filepath, dataset):
         # Drop the source_id and selfies columns
         df.drop(['source_id', 'selfies'], axis=1, inplace=True)
 
-        dfs.append(df)
+        # Get filename without extension
+        assay_basename = os.path.basename(filename)
+        assay_basename = os.path.splitext(assay_basename)[0]
+        assay_basename = assay_basename.replace('assay_', '')
+
+        dfs.append((df, assay_basename))
     
     return dfs
 
@@ -116,7 +120,7 @@ def param_search(X_train, y_train):
 
     # Setup the random search with 4-fold cross validation
     random_search = RandomizedSearchCV(
-        xgb_model, param_grid, cv=4, n_iter=50, random_state=42
+        xgb_model, param_grid, cv=4, n_iter=20, random_state=42
     )
 
     random_search.fit(X_train, y_train)
@@ -161,31 +165,33 @@ def main(input_filepath, output_filepath, features, dataset):
     assay_dfs = load_assays(input_filepath, dataset)
 
     # Evaluate each assay
-    for i, assay_df in enumerate(assay_dfs):
+    for i, (assay_df, assay_filename) in enumerate(assay_dfs):
         # Merge the features and assays
-        merged_df = pd.merge(feature_df, assay_df, left_on="smiles", right_on="canonical_smiles", how="inner")
+        merged_df = pd.merge(feature_df, assay_df, on="canonical_smiles", how="inner")
 
         # Split data into train and test - y-test not needed at scoring takes place in separate script
         y_train = merged_df.loc[merged_df['test_train'] == 0, 'ground_truth']
         y_test = merged_df.loc[merged_df['test_train'] == 1, 'ground_truth']
-        X_train = merged_df.loc[merged_df['test_train'] == 0].drop(['smiles', 'canonical_smiles', 'ground_truth', 'test_train'], axis=1)
-        X_test = merged_df.loc[merged_df['test_train'] == 1].drop(['smiles', 'canonical_smiles', 'ground_truth', 'test_train'], axis=1)
+        X_train = merged_df.loc[merged_df['test_train'] == 0].drop(['canonical_smiles', 'ground_truth', 'test_train'], axis=1)
+        X_test = merged_df.loc[merged_df['test_train'] == 1].drop(['canonical_smiles', 'ground_truth', 'test_train'], axis=1)
 
         logger.info(f"conducting hyperparameter search for assay {i+1}...")
 
         # Conduct hyperparameter search
         best_params = param_search(X_train, y_train)
 
-        logger.info(f"fitting model {i+1}...")
+        logger.info(f"fitting model for assay {i+1}...")
     
         # Fit model and predict using best hyperparameters
         preds_proba, preds = model_fit_predict(X_train, X_test, y_train, best_params)
 
+        logger.info(f"predictions for assay {i+1}...")
+        
         # Add predictions to dataframe
         preds_df = pd.DataFrame({'preds': preds, 'preds_proba': preds_proba, 'ground_truth': y_test})
 
         # Save the predictions to a csv file
-        preds_df.to_csv(f"{output_filepath}/preds_xgboost_{i+1}.csv", index=False) 
+        preds_df.to_csv(f"{output_filepath}/preds_{assay_filename}_{features[0]}.csv", index=False) 
 
     logger.info(f"predictions saved to {output_filepath}")
 
