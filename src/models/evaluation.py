@@ -16,12 +16,18 @@ from sklearn.metrics import (
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
 @click.option("-a", "--assay")
-def main(input_filepath, output_filepath, assay):
+@click.option("-d", "--dataset", multiple=True)
+def main(input_filepath, output_filepath, assay, dataset):
     logger = logging.getLogger(__name__)
     logger.info("Reading data from %s...", input_filepath)
 
     # Read prediction files
-    pred_filenames = [f for f in os.listdir(input_filepath) if f.startswith('preds_') and assay in f]
+    pred_filenames = []
+    if assay:
+        pred_filenames = [f for f in os.listdir(input_filepath) if f.startswith('preds_') and assay in f]
+
+    if dataset:
+        pred_filenames = [f for f in os.listdir(input_filepath) if f.startswith('preds_') and any(d in f for d in dataset)]
 
     # Create a list to store the metric dictionaries
     feature_performance = []
@@ -55,14 +61,15 @@ def main(input_filepath, output_filepath, assay):
         except ValueError as e:
             logger.warn("Cannot compute ROC AUC score because ground truth data contains only one class. Outputting NaN for ROC AUC")
             metrics_dict["auc_roc"] = float('nan')
-
-        # Convert metrics_dict to DataFrame and transpose it to have keys as columns
-        feature_performance.append(metrics_dict)
-
-    metrics_df = pd.DataFrame(feature_performance)
+        
+        # Convert the dictionary to a dataframe
+        metrics_df = pd.DataFrame(metrics_dict, index=[0])
     
-    # Save the metrics to a new CSV file
-    metrics_df.to_csv(f"{output_filepath}/score_{assay}.csv", index=False)
+        # Get the assay name from the filename
+        assay_feature_name = pred_filename.replace("preds_", "").split(".")[0]
+        
+        # Save inidividual assay metrics to a parquet file
+        metrics_df.to_parquet(f"{output_filepath}/score_{assay_feature_name}.parquet")
 
     logger.info("Saved metrics to %s", output_filepath)
 

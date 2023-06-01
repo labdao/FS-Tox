@@ -1,6 +1,7 @@
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
+import statistics
 
 import os
 import logging
@@ -164,6 +165,9 @@ def main(input_filepath, output_filepath, features, dataset):
     # Load the assays
     assay_dfs = load_assays(input_filepath, dataset)
 
+    # Create empty list for results of hyperparameter search
+    best_params_list = []
+
     # Evaluate each assay
     for i, (assay_df, assay_filename) in enumerate(assay_dfs):
         # Merge the features and assays
@@ -175,25 +179,47 @@ def main(input_filepath, output_filepath, features, dataset):
         X_train = merged_df.loc[merged_df['test_train'] == 0].drop(['canonical_smiles', 'ground_truth', 'test_train'], axis=1)
         X_test = merged_df.loc[merged_df['test_train'] == 1].drop(['canonical_smiles', 'ground_truth', 'test_train'], axis=1)
 
-        logger.info(f"conducting hyperparameter search for assay {i+1}...")
 
-        # Conduct hyperparameter search
-        best_params = param_search(X_train, y_train)
+
+        if i < 5:
+            logger.info(f"conducting hyperparameter search for assay {i+1}...")
+            
+            # Conduct hyperparameter search
+            best_params = param_search(X_train, y_train)
+
+            # Add best_params to best_params_list
+            best_params_list.append(best_params)
+        
+        if i == 5:
+            # Use modal best_params for remaining assays
+            tmp_params = {}
+
+            for key in best_params_list[0].keys():
+                try:
+                    tmp_params[key] = statistics.mode([d[key] for d in best_params_list])
+                except statistics.StatisticsError:
+                    logger.warn(f"Couldn't find a unique mode for key '{key}'. You might want to handle this case differently.")
+            
+            best_params = tmp_params
+
 
         logger.info(f"fitting model for assay {i+1}...")
     
         # Fit model and predict using best hyperparameters
         preds_proba, preds = model_fit_predict(X_train, X_test, y_train, best_params)
 
-        logger.info(f"predictions for assay {i+1}...")
+        logger.info(f"creating predictions for assay {i+1}...")
         
         # Add predictions to dataframe
         preds_df = pd.DataFrame({'preds': preds, 'preds_proba': preds_proba, 'ground_truth': y_test})
 
+        # Remove 'preds_' from the start of assay_filename
+        assay_filename = assay_filename.replace('preds_', '')
+
         # Save the predictions to a csv file
         preds_df.to_csv(f"{output_filepath}/preds_{assay_filename}_{features[0]}.csv", index=False) 
 
-    logger.info(f"predictions saved to {output_filepath}")
+    logger.info(f"predictions saved to {output_filepath}/")
 
 
 if __name__ == "__main__":
