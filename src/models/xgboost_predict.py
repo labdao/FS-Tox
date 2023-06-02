@@ -180,7 +180,6 @@ def main(input_filepath, output_filepath, features, dataset):
         X_test = merged_df.loc[merged_df['test_train'] == 1].drop(['canonical_smiles', 'ground_truth', 'test_train'], axis=1)
 
 
-
         if i < 5:
             logger.info(f"conducting hyperparameter search for assay {i+1}...")
             
@@ -212,9 +211,6 @@ def main(input_filepath, output_filepath, features, dataset):
         
         # Add predictions to dataframe
         preds_df = pd.DataFrame({'preds': preds, 'preds_proba': preds_proba, 'ground_truth': y_test})
-
-        # Remove 'preds_' from the start of assay_filename
-        assay_filename = assay_filename.replace('preds_', '')
 
         # Save the predictions to a csv file
         preds_df.to_csv(f"{output_filepath}/preds_{assay_filename}_{features[0]}.csv", index=False) 
