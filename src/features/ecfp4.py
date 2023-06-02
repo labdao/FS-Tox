@@ -39,14 +39,14 @@ def smiles_to_ecfp4(smiles_string, nBits):
 )
 def main(input_filepath, output_filepath, bits):
     logger = logging.getLogger(__name__)
-    logger.info("making final data set from raw data")
+    logger.info("creating ECFP4 fingerprints...")
 
     # Connect to a database in memory
     connection = duckdb.connect(database=":memory:")
     df = connection.execute(
     f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}*.parquet'
+    FROM '{input_filepath}/assay_*.parquet'
     """
     ).df()
     
@@ -61,11 +61,21 @@ def main(input_filepath, output_filepath, bits):
     df.dropna(subset=["ECFP4"], inplace=True)
     df.drop(df[df["ECFP4"] == ""].index, inplace=True)
 
+    # Convert each ECFP4 so that each bit is a column
+    df_ecfp4_bits = pd.DataFrame(df['ECFP4'].apply(list).tolist()).astype(int)
+    df_ecfp4_bits.columns = [f'bit_{i}' for i in range(df_ecfp4_bits.shape[1])]
+
+    # Concatenate original df with df_ecfp4_bits
+    df = pd.concat([df.reset_index(drop=True), df_ecfp4_bits], axis=1)
+
+    # Drop the ECFP4 column
+    df.drop(columns=['ECFP4'], inplace=True)
+
     # Get number of successful conversions
     num_success = len(df)
 
     # Save the ECFP4 fingerprints to a parquet file
-    df.to_parquet(f"{output_filepath}/ecfp4_{bits}.parquet")
+    df.to_parquet(f"{output_filepath}/feature_ecfp4_{bits}.parquet")
 
     logger.info("%d SMILES successfully converted to ECFP4.", num_success)
     logger.info("%d SMILES could not be converted to ECFP4",num_parse_err) if num_parse_err > 0 else None
@@ -74,5 +84,6 @@ def main(input_filepath, output_filepath, bits):
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
+
     main()
     

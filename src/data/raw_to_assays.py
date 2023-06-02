@@ -141,23 +141,15 @@ def convert_to_assay(df, source_id, output_filepath):
         )  # Write each assay to a parquet file
 
         # Write each assay to a parquet file
-        assay_df.to_parquet(f"{output_filepath}/{assay_name}_{source_id}.parquet")
+        assay_df.to_parquet(f"{output_filepath}/assay_{assay_name}_{source_id}.parquet")
 
     # Return error numbers
     return smiles_errors, selfies_errors, len(assay_names)
 
 
 @click.command(help="This command converts raw data to individual assay parquet files.")
-@click.argument(
-    "input_filepath",
-    type=click.Path(exists=True),
-    help="The file path for the input file. This file should exist.",
-)
-@click.argument(
-    "output_filepath",
-    type=click.Path(),
-    help="The directory path where the output parquet files will be saved.",
-)
+@click.argument("input_filepath", type=click.Path(exists=True))
+@click.argument("output_filepath", type=click.Path())
 @click.option(
     "-i",
     "--input-dataset",
@@ -190,7 +182,6 @@ def main(input_filepath, output_filepath, input_dataset):
         smiles_errors,
         selfies_errors,
     )
-
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
