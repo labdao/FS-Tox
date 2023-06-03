@@ -54,14 +54,14 @@ def main(input_filepath, output_filepath):
     smiles = connection.execute(
         f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/assay_*.parquet'
+    FROM read_parquet('{input_filepath}/*')
     """
     ).fetchall()
 
     # Convert list of tuples to list of strings
     smiles_list = [x[0] for x in smiles]
 
-    logger.info("creating embeddings from selfies...")
+    logger.info("creating embeddings from smiles...")
 
     # Get the embedding of a SMILES string
     embeddings_list = chemberta_encode(smiles_list)
@@ -82,10 +82,13 @@ def main(input_filepath, output_filepath):
         ["canonical_smiles"] + [col for col in embeddings_df.columns if col != "canonical_smiles"]
     ]
 
-    # Save the dataframe as a parquet file
-    embeddings_df.to_parquet(f"{output_filepath}/feature_chemberta_embeddings.parquet")
+    # Add a column with the representation name
+    embeddings_df['representation'] = 'chemberta'
 
-    logger.info("emeddings written to %s", output_filepath)
+    # Save the dataframe as a parquet file
+    embeddings_df.to_parquet(f"{output_filepath}/chemberta.parquet")
+
+    logger.info("emeddings saved to %s", output_filepath)
 
 
 if __name__ == "__main__":

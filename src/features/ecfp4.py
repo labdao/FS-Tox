@@ -46,7 +46,7 @@ def main(input_filepath, output_filepath, bits):
     df = connection.execute(
     f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/assay_*.parquet'
+    FROM read_parquet('{input_filepath}/*')
     """
     ).df()
     
@@ -71,11 +71,14 @@ def main(input_filepath, output_filepath, bits):
     # Drop the ECFP4 column
     df.drop(columns=['ECFP4'], inplace=True)
 
+    # Add a column with the representation name
+    df['representation'] = f'ecfp4_{bits}'
+
     # Get number of successful conversions
     num_success = len(df)
 
     # Save the ECFP4 fingerprints to a parquet file
-    df.to_parquet(f"{output_filepath}/feature_ecfp4_{bits}.parquet")
+    df.to_parquet(f"{output_filepath}/ecfp4_{bits}.parquet")
 
     logger.info("%d SMILES successfully converted to ECFP4.", num_success)
     logger.info("%d SMILES could not be converted to ECFP4",num_parse_err) if num_parse_err > 0 else None

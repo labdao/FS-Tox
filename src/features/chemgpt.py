@@ -36,7 +36,7 @@ def chemgpt_encode(smiles):
 @click.argument("output_filepath", type=click.Path())
 def main(input_filepath, output_filepath):
     logger = logging.getLogger(__name__)
-    logger.info("creating embeddings from smiles")
+    logger.info("creating embeddings from smiles...")
 
     # Connect to a database in memory
     connection = duckdb.connect(database=":memory:")
@@ -45,7 +45,7 @@ def main(input_filepath, output_filepath):
     smiles = connection.execute(
         f"""
     SELECT DISTINCT canonical_smiles
-    FROM '{input_filepath}/assay_*.parquet'
+    FROM '{input_filepath}/*.parquet'
     """
     ).fetchall()
 
@@ -73,11 +73,14 @@ def main(input_filepath, output_filepath):
     embeddings_df = embeddings_df[
         ["canonical_smiles"] + [col for col in embeddings_df.columns if col != "canonical_smiles"]
     ]
-
-    logger.info("saving embeddings to %s", output_filepath)
     
+    # Add a column with the representation name
+    embeddings_df['representation'] = 'chemgpt'
+
     # Save the dataframe as a parquet file
-    embeddings_df.to_parquet(f"{output_filepath}/feature_chemgpt_embeddings.parquet")
+    embeddings_df.to_parquet(f"{output_filepath}/chemgpt.parquet")
+    
+    logger.info("saved embeddings to %s", output_filepath)
 
 
 if __name__ == "__main__":

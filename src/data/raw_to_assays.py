@@ -114,7 +114,7 @@ def convert_to_assay(df, source_id, output_filepath):
     # Get number of canonical smiles that could not be converted to selfies
     selfies_errors = df["selfies"].isnull().sum()
 
-    # # Drop rows with null canonical smiles or selfies
+    # Drop rows with null canonical smiles or selfies
     df.dropna(subset=["canonical_smiles"], inplace=True)
 
     # Add source_id column
@@ -138,10 +138,13 @@ def convert_to_assay(df, source_id, output_filepath):
         # Convert ground_truth column to int from float
         assay_df["ground_truth"] = assay_df["ground_truth"].astype(
             int
-        )  # Write each assay to a parquet file
+        )
+
+        # Create a column for the assay name
+        assay_df["assay_id"] = assay_name
 
         # Write each assay to a parquet file
-        assay_df.to_parquet(f"{output_filepath}/assay_{assay_name}_{source_id}.parquet")
+        assay_df.to_parquet(f"{output_filepath}/{assay_name}_{source_id}.parquet")
 
     # Return error numbers
     return smiles_errors, selfies_errors, len(assay_names)
@@ -151,21 +154,21 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
 @click.option(
-    "-i",
-    "--input-dataset",
-    type=click.Choice(["tox21", "clintox", "toxcast"]),
-    help="The name of the input dataset. This must be one of 'tox21', 'clintox', or 'toxcast'.",
+    "-d",
+    "--dataset",
+    type=click.Choice(["tox21_2023", "clintox_2023", "toxcast_2023"]),
+    help="The name of the dataset to wrangle. This must be one of 'tox21_2023', 'clintox_2023', or 'toxcast_2023'.",
 )
-def main(input_filepath, output_filepath, input_dataset):
+def main(input_filepath, output_filepath, dataset):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files")
 
     # Create interim parquet file for each dataset
-    if input_dataset == "tox21":
+    if dataset == "tox21_2023":
         df = process_tox21(input_filepath)
-    elif input_dataset == "clintox":
+    elif dataset == "clintox_2023":
         df = process_clintox(input_filepath)
-    elif input_dataset == "toxcast":
+    elif dataset == "toxcast_2023":
         df = process_toxcast(input_filepath)
 
     # Get the source_id from the input filepath
