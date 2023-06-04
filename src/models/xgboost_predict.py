@@ -8,9 +8,7 @@ import logging
 import click
 
 from utils import load_assays
-from utils import load_representations
-from utils import construct_query
-from utils import mod_test_train_split
+from utils import load_representations, construct_query, mod_test_train_split
 
 
 def param_search(X_train, y_train):
@@ -86,7 +84,6 @@ def main(representation_filepath, assay_filepath, output_filepath, representatio
     
     # Evaluate each assay
     for i, (assay_df, assay_filename) in enumerate(assay_dfs):
-
         # Merge the representations and assays
         merged_df = pd.merge(representation_df, assay_df, on="canonical_smiles", how="inner")
 
@@ -132,7 +129,7 @@ def main(representation_filepath, assay_filepath, output_filepath, representatio
         
         # Add predictions to dataframe
         preds_df = pd.DataFrame(
-            {"canonical_smiles": test_canonical_smiles, "preds": preds, "preds_proba": preds_proba, "ground_truth": y_test}
+            {"canonical_smiles": test_canonical_smiles, "preds": preds, "preds_proba": preds_proba, "ground_truth": y_test, 'model': 'xgboost'}
         )
         
         # Convert the representations tuple into a string with elements separated by '_'
@@ -140,7 +137,7 @@ def main(representation_filepath, assay_filepath, output_filepath, representatio
 
         # Save the predictions to a parquet file
         preds_df.to_parquet(
-            f"{output_filepath}/{assay_filename}_{representation_str}.csv"
+            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.parquet"
         )
 
     logger.info(f"predictions saved to {output_filepath}")
