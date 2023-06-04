@@ -35,8 +35,14 @@ def model_fit_predict(X_train, X_test, y_train, y_test):
 @click.argument("output_filepath", type=click.Path())
 @click.option("-r", "--representation", multiple=True)
 @click.option("-d", "--dataset", multiple=True)
+@click.option("-a", "--assay", multiple=True)
 def main(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset
+    representation_filepath,
+    assay_filepath,
+    output_filepath,
+    representation,
+    dataset,
+    assay,
 ):
     logger = logging.getLogger(__name__)
     logger.info("loading data...")
@@ -48,7 +54,7 @@ def main(
     representation_df = load_representations(representation_query)
 
     # Load the assays
-    assay_dfs = load_assays(assay_filepath, dataset)
+    assay_dfs = load_assays(assay_filepath, dataset, assay)
 
     # Evaluate each assay
     for i, (assay_df, assay_filename) in enumerate(assay_dfs):
