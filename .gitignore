@@ -77,8 +77,7 @@ target/
 .ipynb_checkpoints/
 
 # Data
-data/processed/
-data/interim/
+data/
 
 # Mac OS-specific storage files
 .DS_Store
