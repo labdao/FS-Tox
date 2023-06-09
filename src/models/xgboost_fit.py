@@ -2,13 +2,18 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 import statistics
+import pickle
 
 import os
 import logging
 import click
 
-from utils import load_assays
-from utils import load_representations, construct_query, mod_test_train_split
+from utils import (
+    load_assays,
+    load_representations,
+    construct_query,
+    mod_test_train_split,
+)
 
 
 def param_search(X_train, y_train):
@@ -41,24 +46,6 @@ def param_search(X_train, y_train):
     return best_params
 
 
-def model_fit_predict(X_train, X_test, y_train, best_params):
-    # Train the XGBoost model with the best parameters
-    num_round = 20
-    model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
-    model.fit(X_train, y_train)
-
-    # Train the XGBoost model with the best parameters
-    num_round = 20
-    model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
-    model.fit(X_train, y_train)
-
-    # Make predictions on the test set
-    preds_proba = model.predict_proba(X_test)[:, 1]
-    preds = model.predict(X_test)
-
-    return preds_proba, preds
-
-
 @click.command()
 @click.argument("representation_filepath", type=click.Path(exists=True))
 @click.argument("assay_filepath", type=click.Path(exists=True))
@@ -66,11 +53,13 @@ def model_fit_predict(X_train, X_test, y_train, best_params):
 @click.option("-r", "--representation", multiple=True)
 @click.option("-d", "--dataset", multiple=True)
 @click.option("-a", "--assay", multiple=True)
-def main(representation_filepath, assay_filepath, output_filepath, representation, dataset):
+def main(
+    representation_filepath, assay_filepath, output_filepath, representation, dataset, assay
+):
     logger = logging.getLogger(__name__)
     logger.info("loading data...")
-    
-    # Create a SQL query as a string to select relevant representations 
+
+    # Create a SQL query as a string to select relevant representations
     representation_query = construct_query(representation_filepath, representation)
 
     # Load representations from parquet files
@@ -82,16 +71,15 @@ def main(representation_filepath, assay_filepath, output_filepath, representatio
     # Create empty list for results of hyperparameter search
     best_params_list = []
 
-    
     # Evaluate each assay
     for i, (assay_df, assay_filename) in enumerate(assay_dfs):
         # Merge the representations and assays
-        merged_df = pd.merge(representation_df, assay_df, on="canonical_smiles", how="inner")
+        merged_df = pd.merge(
+            representation_df, assay_df, on="canonical_smiles", how="inner"
+        )
 
         # Conduct test train split
-        X_train, X_test, y_train, y_test = mod_test_train_split(
-            merged_df
-        )
+        X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
         if i < 5:
             logger.info(f"conducting hyperparameter search for assay {i+1}...")
@@ -120,28 +108,23 @@ def main(representation_filepath, assay_filepath, output_filepath, representatio
 
         logger.info(f"fitting model for assay {i+1}...")
 
-        # Fit model and predict using best hyperparameters
-        preds_proba, preds = model_fit_predict(X_train, X_test, y_train, best_params)
+        # Train the XGBoost model with the best parameters
+        num_round = 20
+        model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
+        model.fit(X_train, y_train)
 
-        logger.info(f"creating predictions for assay {i+1}...")
-        
-        # Get canonical smiles for index of output prediction parquet file
-        test_canonical_smiles = merged_df.loc[merged_df["test_train"] == 1, "canonical_smiles"]
-        
-        # Add predictions to dataframe
-        preds_df = pd.DataFrame(
-            {"canonical_smiles": test_canonical_smiles, "preds": preds, "preds_proba": preds_proba, "ground_truth": y_test, 'model': 'xgboost'}
-        )
-        
         # Convert the representations tuple into a string with elements separated by '_'
-        representation_str = '_'.join(representation)
+        representation_str = "_".join(representation)
 
-        # Save the predictions to a parquet file
-        preds_df.to_parquet(
-            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.parquet"
-        )
+         # Create a filename for the model
+        model_path = f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
+        
+        # Save model to a pickle file
+        with open(model_path, "wb") as f:
+            pickle.dump(model, f)
 
-    logger.info(f"predictions saved to {output_filepath}")
+
+    logger.info(f"trained model(s) saved to {output_filepath}")
 
 
 if __name__ == "__main__":
