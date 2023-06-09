@@ -32,6 +32,16 @@ def process_toxcast(input_filepath):
 
     return df
 
+def process_bbbp(input_filepath):
+    """Process the bbbp dataset."""
+    df = pd.read_csv(input_filepath)
+
+    # Remove molecule name and num column
+    df.drop(columns=["num", "name"], inplace=True)
+    print(df.head())
+
+
+    return df
 
 def assign_test_train(df_len):
     """
@@ -156,8 +166,8 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21_2023", "clintox_2023", "toxcast_2023"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21_2023', 'clintox_2023', or 'toxcast_2023'.",
+    type=click.Choice(["tox21_2023", "clintox_2023", "toxcast_2023", "bbbp_2023"]),
+    help="The name of the dataset to wrangle. This must be one of 'tox21_2023', 'clintox_2023', 'toxcast_2023', or 'bbbp_2023'.",
 )
 def main(input_filepath, output_filepath, dataset):
     logger = logging.getLogger(__name__)
@@ -170,6 +180,8 @@ def main(input_filepath, output_filepath, dataset):
         df = process_clintox(input_filepath)
     elif dataset == "toxcast_2023":
         df = process_toxcast(input_filepath)
+    elif dataset == "bbbp_2023":
+        df = process_bbbp(input_filepath)
 
     # Get the source_id from the input filepath
     source_id = os.path.splitext(os.path.basename(input_filepath))[0]
