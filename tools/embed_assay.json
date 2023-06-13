@@ -1,0 +1,32 @@
+{
+  "class": "CommandLineTool",
+  "name": "embed-assay",
+  "description": "Create small molecule embeddings",
+  "baseCommand": ["/bin/bash", "-c"],
+  "arguments": [
+    "python src/features/ecfp4.py $(inputs.assay.filepath) /outputs --bits {inputs.ecfp4_bits.default};",
+    "python src/features/chemgpt.py $(inputs.assay.filepath) /outputs ;",
+    "python src/features/chemberta.py $(inputs.assay.filepath) /outputs ;"
+  ],
+  "dockerPull": "sethhowes/fs-tox@sha256:715516b10859255180bb586be9935ab407a027ce3d574fbbe9d9d328f7c29cf8",
+  "gpuBool": false,
+  "networkBool": false,
+  "inputs": {
+    "assay": {
+      "type": "Array",
+      "items": "File",
+      "glob": ["*.parquet"]
+    },
+    "ecfp4_bits": {
+      "type": "string",
+      "default": "1024"
+    }
+  },
+  "outputs": {
+    "embedding": {
+      "type": "Array",
+      "items": "File",
+      "glob": ["*.parquet"]
+    }
+  }
+}

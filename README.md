@@ -1,10 +1,10 @@
-# FS-Tox: An *In Vivo* Toxicity Benchmark
+# FS-Tox: A Small Molecule Toxicity Benchmark
 ![License](https://img.shields.io/github/license/sethhowes/fs-tox)
 ![Python Version](https://img.shields.io/badge/python-3.11-blue)
 ![Project Status](https://img.shields.io/badge/status-alpha-red)
 
 ## 🔎 Overview
-We are building FS-Tox: a toxicity benchmark for *in vivo* small molecule toxicology assays. Toxicity prediction tasks differ from traditional machine learning tasks in that there are usually only a small number of training examples per toxicity assay. Here, we provide a few-shot learning dataset built using several publicly available toxicity datasets (e.g. EPA's ToxRefDB), and an associated benchmarking pipeline. We will incorporate the different in vivo assays from these datsets consisting of the molecular representation of a small molecule, with an associated binary marker of whether the drug was toxic or not for the given assay.
+We are building FS-Tox: a toxicity benchmark for small molecule toxicology assays. Toxicity prediction tasks differ from traditional machine learning tasks in that there are usually only a small number of training examples per toxicity assay. Here, we provide a few-shot learning dataset built using several publicly available toxicity datasets (e.g. EPA's ToxRefDB), and an associated benchmarking pipeline. We will incorporate the different assays from these datsets consisting of the molecular representation of a small molecule, with an associated binary marker of whether the drug was toxic or not for the given assay.
 
 ## 🗺️ Roadmap
 ### Mid-May 2023 - benchmark SOTA models
