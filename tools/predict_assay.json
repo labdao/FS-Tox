@@ -1,0 +1,44 @@
+{
+    "class": "CommandLineTool",
+    "name": "predict-assay",
+    "description": "Predict small molecule toxicity",
+    "baseCommand": ["/bin/bash", "-c"],
+    "arguments": [
+      "python src/models/logistic_fit $(inputs.model.filepath) $(inputs.assay.filepath) $(inputs.representation.filepath) $(outputs.prediction.filepath) -r $(inputs.representation.default) -d $(inputs.dataset.default) ;",
+    ],
+
+    "requirements": [
+      {
+        "class": "DockerRequirement",
+        "dockerPull": "https://hub.docker.com/layers/sethhowes/fs-tox/latest/images/sha256-270b78fec6e6e310bc7af0bda8d0d90cea5ed0cf0ce296018144750ff2905e59?context=repo"
+      },
+      {
+        "class": "ResourceRequirement",
+        "gpuBool": false,
+        "networkBool": false
+      }
+    ],
+    "inputs": {
+      "representation": {
+        "type": "File",
+        "default": "*.parquet"
+      },
+  
+      "representation_type": {
+        "type": "string",
+        "default": "ecfp4_1024"
+      },
+  
+      "dataset": {
+        "type": "string",
+        "default": "[tox21]"
+      }
+    },
+    "outputs": {
+      "model": {
+        "type": "File",
+        "glob": "*.pkl"
+      }
+    }
+  }
+  
