@@ -166,21 +166,21 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21_2023", "clintox_2023", "toxcast_2023", "bbbp_2023"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21_2023', 'clintox_2023', 'toxcast_2023', or 'bbbp_2023'.",
+    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp"]),
+    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', or 'bbbp'.",
 )
 def main(input_filepath, output_filepath, dataset):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files")
 
     # Create interim parquet file for each dataset
-    if dataset == "tox21_2023":
+    if dataset == "tox21":
         df = process_tox21(input_filepath)
-    elif dataset == "clintox_2023":
+    elif dataset == "clintox":
         df = process_clintox(input_filepath)
-    elif dataset == "toxcast_2023":
+    elif dataset == "toxcast":
         df = process_toxcast(input_filepath)
-    elif dataset == "bbbp_2023":
+    elif dataset == "bbbp":
         df = process_bbbp(input_filepath)
 
     # Get the source_id from the input filepath

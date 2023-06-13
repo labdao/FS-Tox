@@ -18,7 +18,7 @@ from utils import (
 @click.argument("assay_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path(exists=True))
 @click.option("-r", "--representation", default=["ecfp4_1024"], multiple=True)
-@click.option("-d", "--dataset", default=["tox21_2023"], multiple=True)
+@click.option("-d", "--dataset", default=["tox21"], multiple=True)
 @click.option("-a", "--assay", multiple=True)
 def main(
     representation_filepath,

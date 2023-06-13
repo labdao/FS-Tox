@@ -20,7 +20,7 @@ from utils import (
 @click.option("-t", "--test", is_flag=True)
 @click.option("-r", "--representation", default=["ecfp4_1024"], multiple=True)
 @click.option("-m", "--model", default=["logistic_regression"], multiple=True)
-@click.option("-d", "--dataset", default=["tox21_2023"], multiple=True)
+@click.option("-d", "--dataset", default=["tox21"], multiple=True)
 @click.option("-a", "--assay", multiple=True)
 def main(
     model_filepath,

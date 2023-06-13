@@ -16,7 +16,7 @@
     },
     "dataset": {
       "type": "string",
-      "default": "tox21_2023"
+      "default": "tox21"
     }
   },
   "outputs": {
