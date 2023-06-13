@@ -1,12 +1,13 @@
 import os
 import logging
-import pyarrow.parquet as pq
 import click
 import pandas as pd
 from rdkit import Chem
 from rdkit import RDLogger
 import selfies as sf
 import numpy as np
+
+from utils import convert_to_smiles
 
 
 def process_tox21(input_filepath):
@@ -29,6 +30,47 @@ def process_clintox(input_filepath):
 def process_toxcast(input_filepath):
     """Process the toxcast dataset."""
     df = pd.read_csv(input_filepath)
+
+    return df
+
+
+def process_toxval(input_filepath):
+    """Process the toxval dataset."""
+    df = pd.read_csv(input_filepath)
+
+    # Replace '-' with np.nan
+    df.replace("-", np.nan, inplace=True)
+
+    # Select key variables which should not have null values
+    key_vars = [
+        "toxval_type",
+        "common_name",
+        "exposure_route",
+        "toxval_units",
+        "study_type",
+        "source",
+        "toxval_numeric",
+    ]
+
+    # Drop rows with null values for key variables
+    df.dropna(subset=key_vars, inplace=True)
+
+    # Read in the identifiers
+    identifiers = pd.read_csv("/Users/sethhowes/Desktop/FS-Tox/data/external/DSSTox_Identifiers_and_CASRN_2021r1.csv")
+    
+    # Merge tox data with the molecule identifiers
+    df_with_inchis = df.merge(identifiers, how="left", on="dtxsid")
+
+
+    # Apply the function to each value in the Series
+    smiles_series = df_with_inchis["inchi"].astype(str).apply(convert_to_smiles)
+
+    # Reset index to ensure they merge properly
+    df = df.reset_index(drop=True)
+    df["smiles"] = smiles_series
+
+    # Drop rows where smiles column is equal to 'InvalidInChI'
+    df = df[df['smiles'] != 'InvalidInChI']
 
     return df
 
@@ -136,9 +178,7 @@ def convert_to_assay(df, source_id, output_filepath):
         assay_df.rename(columns={assay_name: "ground_truth"}, inplace=True)
 
         # Convert ground_truth column to int from float
-        assay_df["ground_truth"] = assay_df["ground_truth"].astype(
-            int
-        )
+        assay_df["ground_truth"] = assay_df["ground_truth"].astype(int)
 
         # Create a column for the assay name
         assay_df["assay_id"] = assay_name
@@ -185,6 +225,7 @@ def main(input_filepath, output_filepath, dataset):
         smiles_errors,
         selfies_errors,
     )
+
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
