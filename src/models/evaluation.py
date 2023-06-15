@@ -9,8 +9,8 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
     roc_auc_score,
+    average_precision_score,
 )
-
 
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
@@ -24,10 +24,10 @@ def main(input_filepath, output_filepath, assay, dataset):
     # Read prediction files
     pred_filenames = []
     if assay:
-        pred_filenames = [f for f in os.listdir(input_filepath) if f.startswith('preds_') and assay in f]
+        pred_filenames = [f for f in os.listdir(input_filepath) if assay in f]
 
     if dataset:
-        pred_filenames = [f for f in os.listdir(input_filepath) if f.startswith('preds_') and any(d in f for d in dataset)]
+        pred_filenames = [f for f in os.listdir(input_filepath) if any(d in f for d in dataset)]
 
     # Create a list to store the metric dictionaries
     feature_performance = []
@@ -38,7 +38,7 @@ def main(input_filepath, output_filepath, assay, dataset):
         metrics_dict = {}
 
         # Load the predictions
-        df = pd.read_csv(f"{input_filepath}/{pred_filename}")
+        df = pd.read_parquet(os.path.join(input_filepath, pred_filename))
         
         # Get embeding name from filename
         filename_without_extension, _ = os.path.splitext(pred_filename)
@@ -58,6 +58,7 @@ def main(input_filepath, output_filepath, assay, dataset):
         try:
             y_score = df["preds_proba"]
             metrics_dict["auc_roc"] = roc_auc_score(y_true, y_score)
+            metrics_dict["auc_pr"] = average_precision_score(y_true, y_score) # calculate AUC-PR
         except ValueError as e:
             logger.warn("Cannot compute ROC AUC score because ground truth data contains only one class. Outputting NaN for ROC AUC")
             metrics_dict["auc_roc"] = float('nan')

@@ -138,6 +138,12 @@ def process_toxval(input_filepath, output_filepath, identifier):
     # Apply the function to each column
     df_pivoted = df_pivoted.apply(binarize_series)
 
+    # Remove all columns where the value is identical for all non-null rows
+    df_pivoted = df_pivoted.loc[:, df_pivoted.nunique() != 1]
+
+    # Remove all columns where there are fewer than 24 non-null values
+    df_pivoted = df_pivoted.dropna(axis=1, thresh=24)
+
     # Convert smiles index to column
     df_pivoted = df_pivoted.reset_index()
 
@@ -151,7 +157,7 @@ def process_toxval(input_filepath, output_filepath, identifier):
     split_df.columns = assay_components
 
     # Save the assay names as a lookup table
-    split_df.to_csv(os.path.join(output_filepath, "assay_lookup.csv"), index=False)
+    split_df.to_csv(os.path.join("./data/external/assay_lookup.csv"), index=False)
 
     # Simplify the column names
     df_pivoted.columns = [
@@ -284,7 +290,7 @@ def convert_to_assay(df, source_id, output_filepath):
     "-d",
     "--dataset",
     type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', or 'bbbp'.",
+    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp' or 'toxval'.",
 )
 @click.option(
     "-i",
