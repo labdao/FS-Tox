@@ -33,26 +33,27 @@ def process_toxcast(input_filepath):
 
     return df
 
+
 def process_bbbp(input_filepath):
     """Process the bbbp dataset."""
+
     df = pd.read_csv(input_filepath)
 
     # Remove molecule name and num column
     df.drop(columns=["num", "name"], inplace=True)
     print(df.head())
 
-
     return df
 
-def process_toxval(input_filepath):
+
+def process_toxval(input_filepath, output_filepath, identifier):
     """Process the toxval dataset."""
-    df = pd.read_csv(input_filepath)
 
-    # Replace '-' with np.nan
-    df.replace("-", np.nan, inplace=True)
-
-    # Select key variables which should not have null values
-    key_vars = [
+    # Create list of columns to include
+    vars_to_extract = [
+        "dtxsid",
+        "casrn",
+        "long_ref",
         "toxval_type",
         "common_name",
         "exposure_route",
@@ -60,29 +61,105 @@ def process_toxval(input_filepath):
         "study_type",
         "source",
         "toxval_numeric",
+        "toxval_numeric_qualifier",
+    ]
+
+    df = pd.read_csv(input_filepath, usecols=vars_to_extract)
+
+    # Replace '-' with np.nan
+    df.replace("-", np.nan, inplace=True)
+
+    assay_components = [
+        "long_ref",
+        "toxval_type",
+        "common_name",
+        "exposure_route",
+        "toxval_units",
+        "study_type",
+        "source",
     ]
 
     # Drop rows with null values for key variables
-    df.dropna(subset=key_vars, inplace=True)
+    df.dropna(subset=assay_components + ["toxval_numeric"], inplace=True)
+
+    # Drop long refs with different NA formats
+    na_list = ["- - - NA", "- - - -", "- Unnamed - NA", "Unknown", "- Unnamed - -"]
+    df = df[~df["long_ref"].isin(na_list)]
+
+    # Remove those records with toxval_numeric_qualifier not equal to "="
+    df = df[df["toxval_numeric_qualifier"] != "="]
+
+    # Drop the toxval_numeric_qualifier column as it is no longer needed
+    df.drop(columns="toxval_numeric_qualifier", inplace=True)
 
     # Read in the identifiers
-    identifiers = pd.read_csv("/Users/sethhowes/Desktop/FS-Tox/data/external/DSSTox_Identifiers_and_CASRN_2021r1.csv")
-    
+    identifiers = pd.read_csv(identifier)
+
     # Merge tox data with the molecule identifiers
     df_with_inchis = df.merge(identifiers, how="left", on="dtxsid")
-
 
     # Apply the function to each value in the Series
     smiles_series = df_with_inchis["inchi"].astype(str).apply(convert_to_smiles)
 
-    # Reset index to ensure they merge properly
+    # Reset index to ensure smiles series appends correctly
     df = df.reset_index(drop=True)
+
+    # Add the smiles column to the DataFrame
     df["smiles"] = smiles_series
 
     # Drop rows where smiles column is equal to 'InvalidInChI'
-    df = df[df['smiles'] != 'InvalidInChI']
+    df = df[df["smiles"] != "InvalidInChI"]
 
-    return df
+    # Get records that belong to a group of greater than 10 members
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
+
+    # Replace all '_' with '-' in long_ref column
+    df["long_ref"] = df["long_ref"].str.replace("_", "-")
+
+    # Create a new column that is a combination of the assay_components
+    df["combined"] = df[assay_components].apply(
+        lambda row: "_".join(row.values.astype(str)), axis=1
+    )
+
+    # Create a pivot table where each unique combination forms a separate column
+    df_pivoted = df.pivot_table(
+        index="smiles",
+        columns="combined",
+        values="toxval_numeric",
+        aggfunc=np.mean,
+    )
+
+    def binarize_series(series):
+        median = series.median()
+        return series.apply(
+            lambda x: 1 if x > median else (0 if pd.notnull(x) else np.nan)
+        )
+
+    # Apply the function to each column
+    df_pivoted = df_pivoted.apply(binarize_series)
+
+    # Convert smiles index to column
+    df_pivoted = df_pivoted.reset_index()
+
+    # Create a lookup table for the assay names
+    assay_names = pd.DataFrame(df_pivoted.columns[1:], columns=["combined"])
+
+    # Split the 'combined' column at '_', expanding into new columns
+    split_df = assay_names["combined"].str.split("_", expand=True)
+
+    # Name the new columns
+    split_df.columns = assay_components
+
+    # Save the assay names as a lookup table
+    split_df.to_csv(os.path.join(output_filepath, "assay_lookup.csv"), index=False)
+
+    # Simplify the column names
+    df_pivoted.columns = [
+        f"assay_{i}" if col != "smiles" else col
+        for i, col in enumerate(df_pivoted.columns)
+    ]
+
+    return df_pivoted
 
 
 def assign_test_train(df_len):
@@ -206,10 +283,16 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp"]),
+    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval"]),
     help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', or 'bbbp'.",
 )
-def main(input_filepath, output_filepath, dataset):
+@click.option(
+    "-i",
+    "--identifier",
+    type=click.Path(),
+    help="Filepath for chemical identifiers for toxvaldb.",
+)
+def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files")
 
@@ -222,6 +305,8 @@ def main(input_filepath, output_filepath, dataset):
         df = process_toxcast(input_filepath)
     elif dataset == "bbbp":
         df = process_bbbp(input_filepath)
+    elif dataset == "toxval":
+        df = process_toxval(input_filepath, output_filepath, identifier)
 
     # Get the source_id from the input filepath
     source_id = os.path.splitext(os.path.basename(input_filepath))[0]
