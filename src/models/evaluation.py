@@ -27,13 +27,9 @@ def main(input_filepath, output_filepath, assay, dataset):
         pred_filenames = [f for f in os.listdir(input_filepath) if assay in f]
 
     if dataset:
-<<<<<<< Updated upstream
-        pred_filenames = [f for f in os.listdir(input_filepath) if any(d in f for d in dataset)]
-=======
         pred_filenames = [
             f for f in os.listdir(input_filepath) if any(d in f for d in dataset)
         ]
->>>>>>> Stashed changes
 
     # Create a list to store the metric dictionaries
     feature_performance = []
@@ -44,11 +40,7 @@ def main(input_filepath, output_filepath, assay, dataset):
 
         # Load the predictions
         df = pd.read_parquet(os.path.join(input_filepath, pred_filename))
-<<<<<<< Updated upstream
-        
-=======
 
->>>>>>> Stashed changes
         # Get embeding name from filename
         filename_without_extension, _ = os.path.splitext(pred_filename)
         feature_name = re.search(r"[^_]*$", filename_without_extension).group()
@@ -67,13 +59,9 @@ def main(input_filepath, output_filepath, assay, dataset):
         try:
             y_score = df["preds_proba"]
             metrics_dict["auc_roc"] = roc_auc_score(y_true, y_score)
-<<<<<<< Updated upstream
-            metrics_dict["auc_pr"] = average_precision_score(y_true, y_score) # calculate AUC-PR
-=======
             metrics_dict["auc_pr"] = average_precision_score(
                 y_true, y_score
             )  # calculate AUC-PR
->>>>>>> Stashed changes
         except ValueError as e:
             logger.warn(
                 "Cannot compute ROC AUC score because ground truth data contains only one class. Outputting NaN for ROC AUC"
