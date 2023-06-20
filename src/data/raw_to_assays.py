@@ -7,6 +7,7 @@ from rdkit import RDLogger
 import selfies as sf
 import numpy as np
 
+
 from utils import convert_to_smiles
 
 
@@ -46,7 +47,7 @@ def process_bbbp(input_filepath):
     return df
 
 
-def process_toxval(input_filepath, output_filepath, identifier):
+def process_toxval(input_filepath, identifier):
     """Process the toxval dataset."""
 
     # Create list of columns to include
@@ -181,7 +182,10 @@ def assign_test_train(df_len):
 
     # Set the proportions for 0s and 1s
     proportions = [0.8, 0.2]
-
+    
+    # Set the random seed for reproducibility
+    np.random.seed(42)
+    
     # Create a random series with the desired proportions
     test_train = pd.Series(np.random.choice([0, 1], size=df_len, p=proportions))
 
@@ -312,7 +316,7 @@ def main(input_filepath, output_filepath, dataset, identifier):
     elif dataset == "bbbp":
         df = process_bbbp(input_filepath)
     elif dataset == "toxval":
-        df = process_toxval(input_filepath, output_filepath, identifier)
+        df = process_toxval(input_filepath, identifier)
 
     # Get the source_id from the input filepath
     source_id = os.path.splitext(os.path.basename(input_filepath))[0]
