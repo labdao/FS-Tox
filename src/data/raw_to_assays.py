@@ -168,6 +168,9 @@ def process_toxval(input_filepath, identifier):
 
     return df_pivoted
 
+def process_nci60(input_filepath):
+    
+
 
 def assign_test_train(df_len):
     """
