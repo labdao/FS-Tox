@@ -284,7 +284,7 @@ def convert_to_assay(df, source_id, output_filepath):
 
 
 @click.command(help="This command converts raw data to individual assay parquet files.")
-@click.argument("input_filepath", type=click.Path(exists=True))
+@click.argument("input_filepath", type=click.Path())
 @click.argument("output_filepath", type=click.Path())
 @click.option(
     "-d",
@@ -301,6 +301,8 @@ def convert_to_assay(df, source_id, output_filepath):
 def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files")
+
+    input_filepath = os.path.dirname(input_filepath)
 
     # Create interim parquet file for each dataset
     if dataset == "tox21":

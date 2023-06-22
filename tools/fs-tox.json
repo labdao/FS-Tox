@@ -4,13 +4,14 @@
   "description": "Create toxicity predictions from raw data",
   "baseCommand": ["/bin/bash", "-c"],
   "arguments": [
-    "python src/data/raw_to_assays.py $(inputs.unformatted_data.filepath) ./data/processed/assays --dataset $(inputs.dataset.default)",
-    "python ./src/features/make_features.py ./data/processed/assays ./data/processed/representations --feature $(inputs.features.default)",
-    "python ./src/models/train_model.py ./data/processed/representations ./data/processed/assays ./data/processed/models -d $(inputs.dataset.default) -r $(inputs.feature.default) -m $(inputs.model.default)",
-    "python ./src/models/predict.py ./data/processed/models ./data/processed/assays ./data/processed/representations ./data/processed/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default)",
-    "python ./src/models/evaluation.py ./data/processed/predictions ./data/processed/scores -d $(inputs.dataset.default))"
+    "mkdir -p /outputs/assays /outputs/representations /outputs/models /outputs/predictions /outputs/scores",
+    "python src/data/raw_to_assays.py $(inputs.unformatted_data.filepath) /outputs/assays --dataset $(inputs.dataset.default)",
+    "python ./src/features/make_features.py /outputs/assays /outputs/representations --feature $(inputs.features.default)",
+    "python ./src/models/train_model.py /outputs/representations /outputs/assays /outputs/models -d $(inputs.dataset.default) -r $(inputs.feature.default) -m $(inputs.model.default)",
+    "python ./src/models/predict.py /outputs/models /outputs/assays /outputs/representations /outputs/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default)",
+    "python ./src/models/evaluation.py /outputs/predictions /outputs/scores -d $(inputs.dataset.default))"
   ],
-  "dockerPull": "sethhowes/fs-tox@sha256:715516b10859255180bb586be9935ab407a027ce3d574fbbe9d9d328f7c29cf8",
+  "dockerPull": "sethhowes/fs-tox@sha256:d3960db32a6dd5a834b51d3f9a50f854323e671b366d4ec786a74e34c36d5ce0",
   "gpuBool": false,
   "networkBool": false,
   "inputs": {
