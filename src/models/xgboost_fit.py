@@ -46,16 +46,11 @@ def param_search(X_train, y_train):
     return best_params
 
 
-@click.command()
-@click.argument("representation_filepath", type=click.Path(exists=True))
-@click.argument("assay_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
-@click.option("-r", "--representation", multiple=True)
-@click.option("-d", "--dataset", multiple=True)
-@click.option("-a", "--assay", multiple=True)
-def main(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset, assay
+def train(
+    representation_filepath, assay_filepath, output_filepath, representation, dataset
 ):
+    log_fmt = "%(asctime)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
     logger.info("loading data...")
 
@@ -66,7 +61,7 @@ def main(
     representation_df = load_representations(representation_query)
 
     # Load the assays
-    assay_dfs = load_assays(assay_filepath, dataset, assay)
+    assay_dfs = load_assays(assay_filepath, dataset)
 
     # Create empty list for results of hyperparameter search
     best_params_list = []
@@ -116,19 +111,13 @@ def main(
         # Convert the representations tuple into a string with elements separated by '_'
         representation_str = "_".join(representation)
 
-         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
-        
+        # Create a filename for the model
+        model_path = (
+            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
+        )
+
         # Save model to a pickle file
         with open(model_path, "wb") as f:
             pickle.dump(model, f)
 
-
     logger.info(f"trained model(s) saved to {output_filepath}")
-
-
-if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    main()

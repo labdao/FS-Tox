@@ -18,9 +18,9 @@ from utils import (
 @click.argument("representation_filepath", type=click.Path(exists=True))
 @click.argument("prediction_filepath", type=click.Path(exists=True))
 @click.option("-t", "--test", is_flag=True)
-@click.option("-r", "--representation", default=["ecfp4_1024"], multiple=True)
-@click.option("-m", "--model", default=["logistic_regression"], multiple=True)
-@click.option("-d", "--dataset", default=["tox21"], multiple=True)
+@click.option("-r", "--representation", default="ecfp4_1024")
+@click.option("-m", "--model", default="logistic")
+@click.option("-d", "--dataset", default="tox21")
 @click.option("-a", "--assay", multiple=True)
 def main(
     model_filepath,
@@ -44,7 +44,7 @@ def main(
 
     if test:
         # Load the assays
-        assay_dfs = load_assays(assay_filepath, dataset, assay)
+        assay_dfs = load_assays(assay_filepath, dataset)
 
         # Evaluate each assay
         for i, (assay_df, assay_filename) in enumerate(assay_dfs):
@@ -59,7 +59,7 @@ def main(
             _, X_test, _, y_test = mod_test_train_split(merged_df)
 
             # Get model filepath
-            trained_model_filepath = f"{model_filepath}/{assay_filename}_{model[0]}_{representation[0]}.pkl"
+            trained_model_filepath = f"{model_filepath}/{assay_filename}_{model}_{representation}.pkl"
 
             # Load the model
             with open(trained_model_filepath, "rb") as f:
@@ -87,12 +87,9 @@ def main(
                 }
             )
 
-            # Convert the representations tuple into a string with elements separated by '_'
-            representation_str = "_".join(representation)
-
             # Save the predictions to a parquet file
             preds_df.to_parquet(
-                f"{prediction_filepath}/{assay_filename}_{model[0]}_{representation_str}.parquet"
+                f"{prediction_filepath}/{assay_filename}_{model}_{representation}.parquet"
             )
 
     else:
