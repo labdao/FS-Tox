@@ -302,8 +302,6 @@ def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files")
 
-    input_filepath = os.path.dirname(input_filepath)
-
     # Create interim parquet file for each dataset
     if dataset == "tox21":
         df = process_tox21(input_filepath)
