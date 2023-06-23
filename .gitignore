@@ -80,7 +80,7 @@ target/
 jobs/
 
 # Data
-data/
+/data/
 
 # Mac OS-specific storage files
 .DS_Store
