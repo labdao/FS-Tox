@@ -76,6 +76,9 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
+# Jobs folder from Plex
+jobs/
+
 # Data
 data/
 

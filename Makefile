@@ -33,6 +33,8 @@ data: requirements
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
+	find . -type f -name "*parquet" -delete
+	find . -type f -name "*pkl" -delete
 
 ## Lint using flake8
 lint:

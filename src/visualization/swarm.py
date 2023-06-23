@@ -17,7 +17,7 @@ def main(input_filepath, features, dataset):
     logging.info(f"Loading evaluation metrics from {input_filepath}...")
 
     # Create filepath pattern for each feature
-    score_filepaths = [f"{input_filepath}/score_*{dataset}_{feature}.parquet" for feature in features]
+    score_filepaths = [f"{input_filepath}/score_*{dataset}*{feature}.parquet" for feature in features]
 
     # Convert list to string so it can be incorporated into the SQL query
     score_filepaths_as_str = str(score_filepaths)
