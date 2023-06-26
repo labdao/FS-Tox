@@ -120,7 +120,9 @@ def process_toxval(input_filepath, identifier):
 
     return assay_df
 
-def process_nci60(input_filepath: str, identifier: str):
+
+
+def process_nci60(input_filepath, identifier_filepath):
     df = pd.read_csv(input_filepath)
     
     # Columns to group by
@@ -129,7 +131,7 @@ def process_nci60(input_filepath: str, identifier: str):
     # Remove values with higher than -3.5 AVERAGE conc
     df = df[df["AVERAGE"] < 3.5]
 
-    # Remove records that belong to a group of greater than 24 members
+    # Remove records that belong to a group of fewer than 24 members
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
 
     # Get records where the order of magnitude range of the assay outcomes is greater than 2 
@@ -137,11 +139,10 @@ def process_nci60(input_filepath: str, identifier: str):
 
     # Read in the identifiers
     identifier_col_names = ["nsc", "casrn", "smiles"]
-    identifiers = pd.read_csv('/Users/sethhowes/Desktop/FS-Tox/data/external/NCIOPENB_SMI.txt', delim_whitespace=True, names=identifier_col_names)    
+    identifiers = pd.read_csv(identifier_filepath, delim_whitespace=True, names=identifier_col_names)
 
     # Merge the filtered DataFrame with the identifiers
     df = pd.merge(df, identifiers, left_on="NSC", right_on="nsc", how="inner")
-   
 
     if os.path.isfile('temp_data.pkl'):
         df = pd.read_pickle('temp_data.pkl')
@@ -149,11 +150,11 @@ def process_nci60(input_filepath: str, identifier: str):
         # Get canonical smiles
         df = smiles_to_canonical_smiles(df)
         df.to_pickle('temp_data.pkl')
-
+        
     # Drop rows where canonical_smiles is null
     df.dropna(subset=["canonical_smiles"], inplace=True)
 
-    # Remove records that belong to a group of fewer than 24 members
+    # Remove records that belong to a group of fewer than 24 members after removing null canonical_smiles
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
 
     # Pivot the DataFrame so that each column is a unique assay
@@ -251,7 +252,7 @@ def convert_to_assay(df, source_id, output_filepath):
     "-i",
     "--identifier",
     type=click.Path(),
-    help="Filepath for chemical identifiers for toxvaldb.",
+    help="Filepath for chemical identifiers for toxvaldb and nci60.",
 )
 def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
