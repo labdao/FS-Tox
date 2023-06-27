@@ -8,7 +8,7 @@ from utils import (
     load_assays,
     load_representations,
     construct_query,
-    mod_test_train_split,
+    split_test_train,
 )
 
 
@@ -56,10 +56,12 @@ def main(
             )
 
             # Conduct test train split
-            _, X_test, _, y_test = mod_test_train_split(merged_df)
+            _, X_test, _, y_test = split_test_train(merged_df)
 
             # Get model filepath
-            trained_model_filepath = f"{model_filepath}/{assay_filename}_{model[0]}_{representation[0]}.pkl"
+            trained_model_filepath = (
+                f"{model_filepath}/{assay_filename}_{model[0]}_{representation[0]}.pkl"
+            )
 
             # Load the model
             with open(trained_model_filepath, "rb") as f:
@@ -73,7 +75,7 @@ def main(
 
             # Get canonical smiles for index of output prediction parquet file
             test_canonical_smiles = merged_df.loc[
-                merged_df["test_train"] == 1, "canonical_smiles"
+                merged_df["support_query"] == 1, "canonical_smiles"
             ]
 
             # Add predictions to dataframe
@@ -97,12 +99,14 @@ def main(
 
     else:
         # Get model filepath
-        trained_model_filepath = f"{model_filepath}/{assay[0]}_{model[0]}_{representation[0]}.pkl"
-        
+        trained_model_filepath = (
+            f"{model_filepath}/{assay[0]}_{model[0]}_{representation[0]}.pkl"
+        )
+
         # Load the model
         with open(trained_model_filepath, "rb") as f:
             trained_model = pickle.load(f)
-        
+
         # Save canonical smiles to a list
         canonical_smiles = representation_df["canonical_smiles"].tolist()
 
@@ -132,6 +136,7 @@ def main(
         preds_df.to_parquet(
             f"{prediction_filepath}/{assay[0]}_{model[0]}_{representation_str}.parquet"
         )
+
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(message)s"

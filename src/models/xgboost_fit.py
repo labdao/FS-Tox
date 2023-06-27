@@ -12,7 +12,7 @@ from utils import (
     load_assays,
     load_representations,
     construct_query,
-    mod_test_train_split,
+    split_test_train,
 )
 
 
@@ -54,7 +54,12 @@ def param_search(X_train, y_train):
 @click.option("-d", "--dataset", multiple=True)
 @click.option("-a", "--assay", multiple=True)
 def main(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset, assay
+    representation_filepath,
+    assay_filepath,
+    output_filepath,
+    representation,
+    dataset,
+    assay,
 ):
     logger = logging.getLogger(__name__)
     logger.info("loading data...")
@@ -79,7 +84,7 @@ def main(
         )
 
         # Conduct test train split
-        X_train, _, y_train, _ = mod_test_train_split(merged_df)
+        X_train, _, y_train, _ = split_test_train(merged_df)
 
         if i < 5:
             logger.info(f"conducting hyperparameter search for assay {i+1}...")
@@ -116,13 +121,14 @@ def main(
         # Convert the representations tuple into a string with elements separated by '_'
         representation_str = "_".join(representation)
 
-         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
-        
+        # Create a filename for the model
+        model_path = (
+            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
+        )
+
         # Save model to a pickle file
         with open(model_path, "wb") as f:
             pickle.dump(model, f)
-
 
     logger.info(f"trained model(s) saved to {output_filepath}")
 

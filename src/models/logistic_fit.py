@@ -8,10 +8,11 @@ import pickle
 
 from utils import (
     construct_query,
-    mod_test_train_split,
+    split_test_train,
     load_representations,
     load_assays,
 )
+
 
 @click.command()
 @click.argument("representation_filepath", type=click.Path(exists=True))
@@ -39,7 +40,7 @@ def main(
 
     # Load the assays
     assay_dfs = load_assays(assay_filepath, dataset, assay)
-    
+
     logger.info("fitting models to assay data...")
 
     # Evaluate each assay
@@ -50,7 +51,7 @@ def main(
         )
 
         # Conduct test train split
-        X_train, _, y_train, _ = mod_test_train_split(merged_df)
+        X_train, _, y_train, _ = split_test_train(merged_df)
 
         # Create a Logistic Regression object
         log_reg = LogisticRegression()
@@ -63,7 +64,7 @@ def main(
 
         # Create a filename for the model
         model_path = f"{output_filepath}/{assay_filename}_logistic_regression_{representation_str}.pkl"
-        
+
         # Save model to a pickle file
         with open(model_path, "wb") as f:
             pickle.dump(log_reg, f)

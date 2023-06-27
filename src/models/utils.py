@@ -59,7 +59,7 @@ def load_assays(input_filepath, dataset, assay):
 
         return dfs
 
-    # Create query for a single assay 
+    # Create query for a single assay
     query = f"SELECT * FROM '{input_filepath}/{assay[0]}*.parquet'"
 
     # Execute the query
@@ -95,16 +95,15 @@ def load_representations(representation_query):
     return representations_df
 
 
-def mod_test_train_split(merged_df):
+def split_test_train(merged_df):
     # Split data into train and test - y-test not needed at scoring takes place in separate script
-    y_train = merged_df.loc[merged_df["test_train"] == 0, "ground_truth"]
-    y_test = merged_df.loc[merged_df["test_train"] == 1, "ground_truth"]
-    X_train = merged_df.loc[merged_df["test_train"] == 0].drop(
-        ["canonical_smiles", "ground_truth", "test_train", "assay_id"], axis=1
+    y_train = merged_df.loc[merged_df["support_query"] == 0, "ground_truth"]
+    y_test = merged_df.loc[merged_df["support_query"] == 1, "ground_truth"]
+    X_train = merged_df.loc[merged_df["support_query"] == 0].drop(
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id"], axis=1
     )
-    X_test = merged_df.loc[merged_df["test_train"] == 1].drop(
-        ["canonical_smiles", "ground_truth", "test_train", "assay_id"], axis=1
+    X_test = merged_df.loc[merged_df["support_query"] == 1].drop(
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id"], axis=1
     )
 
     return X_train, X_test, y_train, y_test
-
