@@ -7,7 +7,14 @@ from rdkit import RDLogger
 import numpy as np
 
 
-from utils import inchi_to_smiles, smiles_to_canonical_smiles, selfies_encoder, assign_test_train, pivot_assays
+from utils import (
+    inchi_to_smiles,
+    smiles_to_canonical_smiles,
+    selfies_encoder,
+    assign_support_query,
+    pivot_assays,
+)
+
 
 def process_tox21(input_filepath):
     """Process the tox21 dataset."""
@@ -116,15 +123,17 @@ def process_toxval(input_filepath, identifier):
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
 
     # Pivot the DataFrame so that each column is a unique assay
-    assay_df = pivot_assays(df, assay_components, "toxval_numeric")
+    assay_df, assay_lookup = pivot_assays(df, assay_components, "toxval_numeric")
+
+    # Save the assay names as a lookup table
+    assay_lookup.to_csv(os.path.join("./data/external/toxval_lookup.csv"), index=False)
 
     return assay_df
 
 
-
 def process_nci60(input_filepath, identifier_filepath):
     df = pd.read_csv(input_filepath)
-    
+
     # Columns to group by
     assay_components = ["PANEL_NAME", "CELL_NAME", "CONCENTRATION_UNIT", "EXPID"]
 
@@ -134,23 +143,27 @@ def process_nci60(input_filepath, identifier_filepath):
     # Remove records that belong to a group of fewer than 24 members
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
 
-    # Get records where the order of magnitude range of the assay outcomes is greater than 2 
-    df = df.groupby(assay_components).filter(lambda x: (max(x['AVERAGE']) - min(x['AVERAGE'])) >= 2)
+    # Get records where the order of magnitude range of the assay outcomes is greater than 2
+    df = df.groupby(assay_components).filter(
+        lambda x: (max(x["AVERAGE"]) - min(x["AVERAGE"])) >= 2
+    )
 
     # Read in the identifiers
     identifier_col_names = ["nsc", "casrn", "smiles"]
-    identifiers = pd.read_csv(identifier_filepath, delim_whitespace=True, names=identifier_col_names)
+    identifiers = pd.read_csv(
+        identifier_filepath, delim_whitespace=True, names=identifier_col_names
+    )
 
     # Merge the filtered DataFrame with the identifiers
     df = pd.merge(df, identifiers, left_on="NSC", right_on="nsc", how="inner")
 
-    if os.path.isfile('temp_data.pkl'):
-        df = pd.read_pickle('temp_data.pkl')
+    if os.path.isfile("temp_data.pkl"):
+        df = pd.read_pickle("temp_data.pkl")
     else:
         # Get canonical smiles
         df = smiles_to_canonical_smiles(df)
-        df.to_pickle('temp_data.pkl')
-        
+        df.to_pickle("temp_data.pkl")
+
     # Drop rows where canonical_smiles is null
     df.dropna(subset=["canonical_smiles"], inplace=True)
 
@@ -158,7 +171,10 @@ def process_nci60(input_filepath, identifier_filepath):
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
 
     # Pivot the DataFrame so that each column is a unique assay
-    df = pivot_assays(df, assay_components, "AVERAGE")
+    df, assay_lookup = pivot_assays(df, assay_components, "AVERAGE")
+
+    # Save the assay names as a lookup table
+    assay_lookup.to_csv(os.path.join("./data/external/nci60_lookup.csv"), index=False)
 
     return df
 
@@ -221,7 +237,7 @@ def convert_to_assay(df, source_id, output_filepath):
         assay_df.reset_index(drop=True, inplace=True)
 
         # Randomly assign each row to train or test
-        assay_df["support_query"] = assign_test_train(len(assay_df))
+        assay_df["support_query"] = assign_support_query(len(assay_df))
 
         # Change assay column label as ground_truth
         assay_df.rename(columns={assay_name: "ground_truth"}, inplace=True)

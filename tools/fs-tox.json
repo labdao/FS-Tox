@@ -11,7 +11,7 @@
     "python ./src/models/predict.py /outputs/models /outputs/assays /outputs/representations /outputs/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default);",
     "python ./src/models/evaluation.py /outputs/predictions /outputs/scores -d $(inputs.dataset.default);"
   ],
-  "dockerPull": "quay.io/labdao/fs-tox@sha256:3ca41ac278c1047271aeb3933a4471d9b0b63c9475f27ba08f759e97e57e8d2d",
+  "dockerPull": "quay.io/labdao/fs-tox:assay-test-train",
   "gpuBool": false,
   "networkBool": false,
   "inputs": {
