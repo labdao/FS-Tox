@@ -11,7 +11,7 @@
     "python ./src/models/predict.py /outputs/models /outputs/assays /outputs/representations /outputs/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default);",
     "python ./src/models/evaluation.py /outputs/predictions /outputs/scores -d $(inputs.dataset.default);"
   ],
-  "dockerPull": "sethhowes/fs-tox@sha256:d3960db32a6dd5a834b51d3f9a50f854323e671b366d4ec786a74e34c36d5ce0",
+  "dockerPull": "quay.io/labdao/fs-tox@sha256:3ca41ac278c1047271aeb3933a4471d9b0b63c9475f27ba08f759e97e57e8d2d",
   "gpuBool": false,
   "networkBool": false,
   "inputs": {
@@ -21,7 +21,7 @@
     },
     "dataset": {
       "type": "string",
-      "default": "tox21"
+      "default": "nci60"
     },
     "feature": {
       "type": "string",
