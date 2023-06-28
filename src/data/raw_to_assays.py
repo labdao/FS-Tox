@@ -4,12 +4,10 @@ import click
 import pandas as pd
 from rdkit import Chem
 from rdkit import RDLogger
-import selfies as sf
 import numpy as np
 
 
-from utils import convert_to_smiles
-
+from utils import inchi_to_smiles, smiles_to_canonical_smiles, selfies_encoder, assign_test_train, pivot_assays
 
 def process_tox21(input_filepath):
     """Process the tox21 dataset."""
@@ -100,7 +98,7 @@ def process_toxval(input_filepath, identifier):
     df_with_inchis = df.merge(identifiers, how="left", on="dtxsid")
 
     # Apply the function to each value in the Series
-    smiles_series = df_with_inchis["inchi"].astype(str).apply(convert_to_smiles)
+    smiles_series = df_with_inchis["inchi"].astype(str).apply(inchi_to_smiles)
 
     # Reset index to ensure smiles series appends correctly
     df = df.reset_index(drop=True)
@@ -117,96 +115,52 @@ def process_toxval(input_filepath, identifier):
     # Replace all '_' with '-' in long_ref column
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
 
-    # Create a new column that is a combination of the assay_components
-    df["combined"] = df[assay_components].apply(
-        lambda row: "_".join(row.values.astype(str)), axis=1
-    )
+    # Pivot the DataFrame so that each column is a unique assay
+    assay_df = pivot_assays(df, assay_components, "toxval_numeric")
 
-    # Create a pivot table where each unique combination forms a separate column
-    df_pivoted = df.pivot_table(
-        index="smiles",
-        columns="combined",
-        values="toxval_numeric",
-        aggfunc=np.mean,
-    )
-
-    def binarize_series(series):
-        median = series.median()
-        return series.apply(
-            lambda x: 1 if x > median else (0 if pd.notnull(x) else np.nan)
-        )
-
-    # Apply the function to each column
-    df_pivoted = df_pivoted.apply(binarize_series)
-
-    # Remove all columns where the value is identical for all non-null rows
-    df_pivoted = df_pivoted.loc[:, df_pivoted.nunique() != 1]
-
-    # Remove all columns where there are fewer than 24 non-null values
-    df_pivoted = df_pivoted.dropna(axis=1, thresh=24)
-
-    # Convert smiles index to column
-    df_pivoted = df_pivoted.reset_index()
-
-    # Create a lookup table for the assay names
-    assay_names = pd.DataFrame(df_pivoted.columns[1:], columns=["combined"])
-
-    # Split the 'combined' column at '_', expanding into new columns
-    split_df = assay_names["combined"].str.split("_", expand=True)
-
-    # Name the new columns
-    split_df.columns = assay_components
-
-    # Save the assay names as a lookup table
-    split_df.to_csv(os.path.join("./data/external/assay_lookup.csv"), index=False)
-
-    # Simplify the column names
-    df_pivoted.columns = [
-        f"assay_{i}" if col != "smiles" else col
-        for i, col in enumerate(df_pivoted.columns)
-    ]
-
-    return df_pivoted
+    return assay_df
 
 
-def assign_test_train(df_len):
-    """
-    Creates a pandas Series with random assignment of each row to test or train.
 
-    Parameters:
-    df_len (int): The length of the DataFrame to create the test-train split for.
-
-    Returns:
-    pd.Series: A pandas Series with random assignment of each row to test (0) or train (1).
-    """
-
-    # Set the proportions for 0s and 1s
-    proportions = [0.8, 0.2]
+def process_nci60(input_filepath, identifier_filepath):
+    df = pd.read_csv(input_filepath)
     
-    # Set the random seed for reproducibility
-    np.random.seed(42)
-    
-    # Create a random series with the desired proportions
-    test_train = pd.Series(np.random.choice([0, 1], size=df_len, p=proportions))
+    # Columns to group by
+    assay_components = ["PANEL_NAME", "CELL_NAME", "CONCENTRATION_UNIT", "EXPID"]
 
-    # Create the pandas Series
-    return test_train
+    # Remove values with higher than -3.5 AVERAGE conc
+    df = df[df["AVERAGE"] < 3.5]
 
+    # Remove records that belong to a group of fewer than 24 members
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
 
-def safe_encoder(smiles):
-    """
-    Encodes a SMILES string using the selfies library, handling any exceptions that may occur.
+    # Get records where the order of magnitude range of the assay outcomes is greater than 2 
+    df = df.groupby(assay_components).filter(lambda x: (max(x['AVERAGE']) - min(x['AVERAGE'])) >= 2)
 
-    Parameters:
-    smiles (str): The SMILES string to encode.
+    # Read in the identifiers
+    identifier_col_names = ["nsc", "casrn", "smiles"]
+    identifiers = pd.read_csv(identifier_filepath, delim_whitespace=True, names=identifier_col_names)
 
-    Returns:
-    str or None: The encoded SELFIES string, or None if an exception occurred during encoding.
-    """
-    try:
-        return sf.encoder(smiles)
-    except Exception as e:
-        return None
+    # Merge the filtered DataFrame with the identifiers
+    df = pd.merge(df, identifiers, left_on="NSC", right_on="nsc", how="inner")
+
+    if os.path.isfile('temp_data.pkl'):
+        df = pd.read_pickle('temp_data.pkl')
+    else:
+        # Get canonical smiles
+        df = smiles_to_canonical_smiles(df)
+        df.to_pickle('temp_data.pkl')
+        
+    # Drop rows where canonical_smiles is null
+    df.dropna(subset=["canonical_smiles"], inplace=True)
+
+    # Remove records that belong to a group of fewer than 24 members after removing null canonical_smiles
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
+
+    # Pivot the DataFrame so that each column is a unique assay
+    df = pivot_assays(df, assay_components, "AVERAGE")
+
+    return df
 
 
 def convert_to_assay(df, source_id, output_filepath):
@@ -232,19 +186,17 @@ def convert_to_assay(df, source_id, output_filepath):
     # Suppress RDKit warnings
     RDLogger.DisableLog("rdApp.*")
 
+    # Convert smiles to canonical smiles if not already done
+    if "canonical_smiles" not in df.columns:
+        df = smiles_to_canonical_smiles(df, "smiles")
+
     # Get assay names
     all_columns = df.columns.tolist()
-    assay_names = [col for col in all_columns if col != "smiles"]
-
-    # Convert smiles to canonical smiles
-    mol_objects = df["smiles"].apply(Chem.MolFromSmiles)
-    df["canonical_smiles"] = mol_objects.apply(
-        lambda x: Chem.MolToSmiles(x) if x is not None else None
-    )
+    assay_names = [col for col in all_columns if col != "canonical_smiles"]
 
     # Create selfie column
     df["selfies"] = df["canonical_smiles"].apply(
-        lambda x: safe_encoder(x) if x is not None else None
+        lambda x: selfies_encoder(x) if x is not None else None
     )
 
     # Get number of smiles that could not be converted to canonical smiles
@@ -293,14 +245,14 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp' or 'toxval'.",
+    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60"]),
+    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', or 'nci60'.",
 )
 @click.option(
     "-i",
     "--identifier",
     type=click.Path(),
-    help="Filepath for chemical identifiers for toxvaldb.",
+    help="Filepath for chemical identifiers for toxvaldb and nci60.",
 )
 def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
@@ -317,6 +269,8 @@ def main(input_filepath, output_filepath, dataset, identifier):
         df = process_bbbp(input_filepath)
     elif dataset == "toxval":
         df = process_toxval(input_filepath, identifier)
+    elif dataset == "nci60":
+        df = process_nci60(input_filepath, identifier)
 
     # Get the source_id from the input filepath
     source_id = os.path.splitext(os.path.basename(input_filepath))[0]
