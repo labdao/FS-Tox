@@ -6,8 +6,8 @@ import click
 import logging
 
 @click.command(help="This command creates features from the small molecules contained in a given assay.")
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
+@click.argument("input_filepath", type=click.Path(exists=True), default="data/processed/assays")
+@click.argument("output_filepath", type=click.Path(), default="data/processed/features")
 @click.option("--feature", "-f", default="ecfp4_1024", type=click.Choice(["ecfp4_1024", "ecfp4_2048", "chemberta", "chemgpt"]))
 def main(input_filepath, output_filepath, feature):
     logger = logging.getLogger(__name__)

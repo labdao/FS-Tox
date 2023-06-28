@@ -30,13 +30,14 @@ def main(input_filepath, feature, dataset):
             """
     ).fetchdf()
 
-    # Randomly sample 600 rows from the DataFrame
-    sampled_df = pred_df.sample(n=600, random_state=42)
+    if len(pred_df) > 600:
+        # Randomly sample 600 rows from the DataFrame
+        pred_df = pred_df.sample(n=600, random_state=42)
 
     logging.info("Creating swarmplot...")
     
     # Create swarmplot
-    sns.swarmplot(x=sampled_df["feature"], y=sampled_df["auc_roc"], hue=sampled_df["feature"], palette='Set2')
+    sns.swarmplot(x=pred_df["feature"], y=pred_df["auc_roc"], hue=pred_df["feature"], palette='Set2')
     plt.title(f"Swarmplot of AUC-ROC scores for assays in {dataset}")
 
     plt.show()

@@ -98,16 +98,16 @@ def process_toxval(input_filepath, identifier):
     df_with_inchis = df.merge(identifiers, how="left", on="dtxsid")
 
     # Apply the function to each value in the Series
-    smiles_series = df_with_inchis["inchi"].astype(str).apply(inchi_to_smiles)
+    canonical_smiles = df_with_inchis["inchi"].astype(str).apply(inchi_to_smiles)
 
     # Reset index to ensure smiles series appends correctly
     df = df.reset_index(drop=True)
 
     # Add the smiles column to the DataFrame
-    df["smiles"] = smiles_series
+    df["canonical_smiles"] = canonical_smiles
 
     # Drop rows where smiles column is equal to 'InvalidInChI'
-    df = df[df["smiles"] != "InvalidInChI"]
+    df = df[df["canonical_smiles"] != "InvalidInChI"]
 
     # Get records that belong to a group of greater than 10 members
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
@@ -116,10 +116,12 @@ def process_toxval(input_filepath, identifier):
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
 
     # Pivot the DataFrame so that each column is a unique assay
-    assay_df = pivot_assays(df, assay_components, "toxval_numeric")
+    assay_df, lookup_df = pivot_assays(df, assay_components, "toxval_numeric")
+
+    # Save the lookup table
+    lookup_df.to_csv(os.path.join(f"./data/processed/assay_lookup/toxval_lookup.csv"), index=False)
 
     return assay_df
-
 
 
 def process_nci60(input_filepath, identifier_filepath):
@@ -133,9 +135,6 @@ def process_nci60(input_filepath, identifier_filepath):
 
     # Remove records that belong to a group of fewer than 24 members
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
-
-    # Get records where the order of magnitude range of the assay outcomes is greater than 2 
-    df = df.groupby(assay_components).filter(lambda x: (max(x['AVERAGE']) - min(x['AVERAGE'])) >= 2)
 
     # Read in the identifiers
     identifier_col_names = ["nsc", "casrn", "smiles"]
@@ -158,7 +157,10 @@ def process_nci60(input_filepath, identifier_filepath):
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
 
     # Pivot the DataFrame so that each column is a unique assay
-    df = pivot_assays(df, assay_components, "AVERAGE")
+    df, lookup_df = pivot_assays(df, assay_components, "AVERAGE")
+
+    # Save the lookup table
+    lookup_df.to_csv(os.path.join("./data/processed/assay_lookup/nci60_lookup.csv"), index=False)
 
     return df
 

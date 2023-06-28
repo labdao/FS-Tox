@@ -92,26 +92,29 @@ def pivot_assays(df, assay_components, outcome_col_name):
      # Apply the function to each column
     df = binarize_df(df)
 
+    # Remove columns that have fewer than 24 members
+    df = df.dropna(thresh=24, axis=1)
+
+    # Get records where the order of magnitude range of the assay outcomes is greater than 2 
+    df = df.loc[:, (df.max() / df.min() > 2).values]
+
     # Convert smiles index to column
     df = df.reset_index()
 
     # Remove all columns where the value is identical for all non-null rows
     df = df.loc[:, df.nunique() != 1]
 
-    # Create a lookup table for the assay names
+    # Get the unique assay names
     assay_names = pd.DataFrame(df.columns[1:], columns=["combined"])
 
-    # Split the 'combined' column at '_', expanding into new columns
-    split_df = assay_names["combined"].str.split("_", expand=True)
+    # Create a lookup table for the assay names
+    lookup_df = assay_names["combined"].str.split("_", expand=True)
 
     # Name the new columns
-    split_df.columns = assay_components
+    lookup_df.columns = assay_components
 
     # Assign individual assays to either test or train
-    split_df["test_train"] = assign_test_train(len(split_df), proportions=[0.97, 0.03])
-
-    # Save the assay names as a lookup table
-    split_df.to_csv(os.path.join("./data/processed/assay_lookup/assay_lookup.csv"), index=False)
+    lookup_df["test_train"] = assign_test_train(len(lookup_df), proportions=[0.97, 0.03])
 
     # Simplify the column names
     df.columns = [
@@ -119,7 +122,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
         for i, col in enumerate(df.columns)
     ]
 
-    return df
+    return df, lookup_df
 
 
 def assign_test_train(df_len, proportions=[0.5, 0.5]):
