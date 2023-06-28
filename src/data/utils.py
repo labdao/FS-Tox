@@ -107,6 +107,9 @@ def pivot_assays(df, assay_components, outcome_col_name):
     # Name the new columns
     split_df.columns = assay_components
 
+    # Assign individual assays to either test or train
+    split_df["test_train"] = assign_test_train(len(split_df), proportions=[0.97, 0.03])
+
     # Save the assay names as a lookup table
     split_df.to_csv(os.path.join("./data/processed/assay_lookup/assay_lookup.csv"), index=False)
 
@@ -119,7 +122,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
     return df
 
 
-def assign_test_train(df_len):
+def assign_test_train(df_len, proportions=[0.8, 0.2]):
     """
     Creates a pandas Series with random assignment of each row to test or train.
 
@@ -132,9 +135,6 @@ def assign_test_train(df_len):
 
     # Set seed for reproducibility
     np.random.seed(42)
-
-    # Set the proportions for 0s and 1s
-    proportions = [0.8, 0.2]
 
     # Create a random series with the desired proportions
     test_train = pd.Series(np.random.choice([0, 1], size=df_len, p=proportions))
