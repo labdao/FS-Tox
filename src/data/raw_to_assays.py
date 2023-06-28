@@ -240,7 +240,7 @@ def convert_to_assay(df, source_id, output_filepath):
 
 
 @click.command(help="This command converts raw data to individual assay parquet files.")
-@click.argument("input_filepath", type=click.Path(exists=True))
+@click.argument("input_filepath", type=click.Path())
 @click.argument("output_filepath", type=click.Path())
 @click.option(
     "-d",

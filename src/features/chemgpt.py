@@ -31,10 +31,11 @@ def chemgpt_encode(smiles):
     return average_embeddings
 
 
-@click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
-def main(input_filepath, output_filepath):
+def generate(input_filepath, output_filepath):
+
+    log_fmt = "%(asctime)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
     logger = logging.getLogger(__name__)
     logger.info("creating embeddings from smiles...")
 
@@ -81,9 +82,3 @@ def main(input_filepath, output_filepath):
     embeddings_df.to_parquet(f"{output_filepath}/chemgpt.parquet")
     
     logger.info("saved embeddings to %s", output_filepath)
-
-
-if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-    main()
