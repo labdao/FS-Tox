@@ -110,7 +110,7 @@ def process_toxval(input_filepath, identifier):
     df = df[df["smiles"] != "InvalidInChI"]
 
     # Get records that belong to a group of greater than 10 members
-    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
 
     # Replace all '_' with '-' in long_ref column
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
@@ -132,7 +132,7 @@ def process_nci60(input_filepath, identifier_filepath):
     df = df[df["AVERAGE"] < 3.5]
 
     # Remove records that belong to a group of fewer than 24 members
-    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
 
     # Get records where the order of magnitude range of the assay outcomes is greater than 2 
     df = df.groupby(assay_components).filter(lambda x: (max(x['AVERAGE']) - min(x['AVERAGE'])) >= 2)
@@ -155,7 +155,7 @@ def process_nci60(input_filepath, identifier_filepath):
     df.dropna(subset=["canonical_smiles"], inplace=True)
 
     # Remove records that belong to a group of fewer than 24 members after removing null canonical_smiles
-    df = df.groupby(assay_components).filter(lambda x: len(x) >= 24)
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
 
     # Pivot the DataFrame so that each column is a unique assay
     df = pivot_assays(df, assay_components, "AVERAGE")

@@ -122,7 +122,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
     return df
 
 
-def assign_test_train(df_len, proportions=[0.8, 0.2]):
+def assign_test_train(df_len, proportions=[0.5, 0.5]):
     """
     Creates a pandas Series with random assignment of each row to test or train.
 

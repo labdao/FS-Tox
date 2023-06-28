@@ -81,6 +81,7 @@ jobs/
 
 # Data
 /data/
+/temp_data.pkl
 
 # Mac OS-specific storage files
 .DS_Store
