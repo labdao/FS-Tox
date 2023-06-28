@@ -5,13 +5,13 @@
   "baseCommand": ["/bin/bash", "-c"],
   "arguments": [
     "mkdir -p /outputs/assays /outputs/representations /outputs/models /outputs/predictions /outputs/scores;",
-    "python src/data/raw_to_assays.py $(inputs.unformatted_data.filepath) /outputs/assays --dataset $(inputs.dataset.default);",
-    "python ./src/features/make_features.py /outputs/assays /outputs/representations --feature $(inputs.feature.default);",
-    "python ./src/models/train_model.py /outputs/representations /outputs/assays /outputs/models -d $(inputs.dataset.default) -r $(inputs.feature.default) -m $(inputs.model.default);",
-    "python ./src/models/predict.py /outputs/models /outputs/assays /outputs/representations /outputs/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default);",
-    "python ./src/models/evaluation.py /outputs/predictions /outputs/scores -d $(inputs.dataset.default);"
+    "python3 ./src/data/raw_to_assays.py $(inputs.unformatted_data.filepath) /outputs/assays --dataset $(inputs.dataset.default);",
+    "python3 ./src/features/make_features.py /outputs/assays /outputs/representations --feature $(inputs.feature.default);",
+    "python3 ./src/models/train_model.py /outputs/representations /outputs/assays /outputs/models -d $(inputs.dataset.default) -r $(inputs.feature.default) -m $(inputs.model.default);",
+    "python3 ./src/models/predict.py /outputs/models /outputs/assays /outputs/representations /outputs/predictions -t -d $(inputs.dataset.default) --representation $(inputs.feature.default) --model $(inputs.model.default);",
+    "python3 ./src/models/evaluation.py /outputs/predictions /outputs/scores -d $(inputs.dataset.default);"
   ],
-  "dockerPull": "quay.io/labdao/fs-tox:assay-test-train",
+  "dockerPull": "sethhowes/fs-tox:latest",
   "gpuBool": false,
   "networkBool": false,
   "inputs": {

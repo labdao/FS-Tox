@@ -1,10 +1,10 @@
 #!/bin/bash
-python ./src/data/raw_to_assays.py ./data/raw/toxvaldb_2023.csv ./data/processed/assays -d toxval -i ./data/external/DSSTox_Identifiers_and_CASRN_2021r1.csv
+python3 ./src/data/raw_to_assays.py ./data/raw/nci60/LC50/LC50.csv ./data/processed/assays --dataset nci60
 
-python ./src/features/ecfp4.py ./data/processed/assays ./data/processed/representations
+python3 ./src/features/make_features.py ./data/processed/assays ./data/processed/features --feature ecfp_1024
 
-python ./src/models/logistic_fit.py ./data/processed/representations ./data/processed/assays ./data/processed/models -d toxvaldb_2023 -r ecfp4_1024
+python3 ./src/models/train_model.py ./data/processed/features ./data/processed/assays ./data/processed/models -d nci60 -r ecfp4_1024 -m logistic
 
-python ./src/models/predict.py ./data/processed/models ./data/processed/assays ./data/processed/representations ./data/processed/predictions -t -d toxvaldb_2023
+python3 ./src/models/predict.py ./data/processed/models ./data/processed/assays ./data/processed/features ./data/processed/predictions -t -d nci60 --representation ecfp4_1024 --model logistic
 
-python ./src/models/evaluation.py ./data/processed/predictions ./data/processed/scores -d toxvaldb_2023
+python3 ./src/models/evaluation.py ./data/processed/predictions ./data/processed/scores --dataset nci60
