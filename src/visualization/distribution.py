@@ -29,16 +29,14 @@ def main(input_filepath, feature, dataset):
             FROM read_parquet({score_filepaths_as_str})
             """
     ).fetchdf()
-
-    # Randomly sample 600 rows from the DataFrame
-    sampled_df = pred_df.sample(n=600, random_state=42)
-
-    logging.info("Creating swarmplot...")
     
-    # Create swarmplot
-    sns.swarmplot(x=sampled_df["feature"], y=sampled_df["auc_roc"], hue=sampled_df["feature"], palette='Set2')
-    plt.title(f"Swarmplot of AUC-ROC scores for assays in {dataset}")
+    logging.info("Creating distribution...")
 
+    # Create distribution plot
+    sns.distplot(pred_df["auc_roc"], kde=False, rug=True)
+    plt.title(f"Distribution of AUC-ROC scores for assays in {dataset}")
+    plt.xlabel("AUC-ROC score")
+    plt.ylabel("Count")
     plt.show()
 
 

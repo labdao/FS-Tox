@@ -241,7 +241,7 @@ def convert_to_assay(df, source_id, output_filepath):
 
 @click.command(help="This command converts raw data to individual assay parquet files.")
 @click.argument("input_filepath", type=click.Path())
-@click.argument("output_filepath", type=click.Path())
+@click.argument("output_filepath", type=click.Path(), default="data/processed/assays")
 @click.option(
     "-d",
     "--dataset",
@@ -272,8 +272,8 @@ def main(input_filepath, output_filepath, dataset, identifier):
     elif dataset == "nci60":
         df = process_nci60(input_filepath, identifier)
 
-    # Get the source_id from the input filepath
-    source_id = os.path.splitext(os.path.basename(input_filepath))[0]
+    # Set source_id as the dataset name
+    source_id = dataset
 
     smiles_errors, selfies_errors, assay_num = convert_to_assay(
         df, source_id, output_filepath
@@ -289,7 +289,7 @@ def main(input_filepath, output_filepath, dataset, identifier):
 
 
 if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
 
     main()

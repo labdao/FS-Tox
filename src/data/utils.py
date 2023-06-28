@@ -34,8 +34,8 @@ def binarize_df(df):
     binarized_df = pd.DataFrame(binarized_df, columns=df.columns, index=df.index)
 
     # Count 1s and 0s in each column
-    count_1s = (df == 1).sum()
-    count_0s = (df == 0).sum()
+    count_1s = (binarized_df == 1).sum()
+    count_0s = (binarized_df == 0).sum()
 
     # Compute the proportion
     proportion = count_1s / count_0s
@@ -108,7 +108,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
     split_df.columns = assay_components
 
     # Save the assay names as a lookup table
-    split_df.to_csv(os.path.join("./data/external/assay_lookup.csv"), index=False)
+    split_df.to_csv(os.path.join("./data/processed/assay_lookup/assay_lookup.csv"), index=False)
 
     # Simplify the column names
     df.columns = [
