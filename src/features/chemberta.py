@@ -40,11 +40,11 @@ def chemberta_encode(smiles_list):
 
     return embeddings
 
+def generate(input_filepath, output_filepath):
 
-@click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
-def main(input_filepath, output_filepath):
+    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+    
     logger = logging.getLogger(__name__)
 
     # Connect to a database in memory
@@ -89,10 +89,3 @@ def main(input_filepath, output_filepath):
     embeddings_df.to_parquet(f"{output_filepath}/chemberta.parquet")
 
     logger.info("emeddings saved to %s", output_filepath)
-
-
-if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    main()

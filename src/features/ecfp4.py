@@ -26,18 +26,11 @@ def smiles_to_ecfp4(smiles_string, nBits):
         )  # Convert the BitVector to a Python list of ints
         return "".join(map(str, ecfp4))  # Convert the list of ints to a string
 
+def generate(input_filepath, output_filepath, bits):
 
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-@click.option(
-    "-b",
-    "--bits",
-    default=1024,
-    type=int,
-    help="Length of the ECFP4 fingerprint bitstring",
-)
-def main(input_filepath, output_filepath, bits):
+    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
     logger = logging.getLogger(__name__)
     logger.info("creating ECFP4 fingerprints...")
 
@@ -82,11 +75,3 @@ def main(input_filepath, output_filepath, bits):
 
     logger.info("%d SMILES successfully converted to ECFP4.", num_success)
     logger.info("%d SMILES could not be converted to ECFP4",num_parse_err) if num_parse_err > 0 else None
-
-
-if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    main()
-    

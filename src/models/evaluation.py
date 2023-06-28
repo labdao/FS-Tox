@@ -15,20 +15,17 @@ from sklearn.metrics import (
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True))
 @click.argument("output_filepath", type=click.Path())
-@click.option("-a", "--assay")
-@click.option("-d", "--dataset", multiple=True)
-def main(input_filepath, output_filepath, assay, dataset):
+@click.option("-d", "--dataset")
+def main(input_filepath, output_filepath, dataset):
     logger = logging.getLogger(__name__)
-    logger.info("Reading data from %s...", input_filepath)
+    logger.info("Reading data from %s", input_filepath)
 
     # Read prediction files
     pred_filenames = []
-    if assay:
-        pred_filenames = [f for f in os.listdir(input_filepath) if assay in f]
 
     if dataset:
         pred_filenames = [
-            f for f in os.listdir(input_filepath) if any(d in f for d in dataset)
+            f for f in os.listdir(input_filepath) if dataset in f
         ]
 
     # Create a list to store the metric dictionaries
@@ -75,7 +72,7 @@ def main(input_filepath, output_filepath, assay, dataset):
         assay_feature_name = pred_filename.replace("preds_", "").split(".")[0]
 
         # Save inidividual assay metrics to a parquet file
-        metrics_df.to_parquet(f"{output_filepath}/score_{assay_feature_name}.parquet")
+        metrics_df.to_parquet(f"{output_filepath}/{assay_feature_name}.parquet")
 
     logger.info("Saved metrics to %s", output_filepath)
 

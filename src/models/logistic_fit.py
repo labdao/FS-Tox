@@ -13,21 +13,13 @@ from utils import (
     load_assays,
 )
 
-@click.command()
-@click.argument("representation_filepath", type=click.Path(exists=True))
-@click.argument("assay_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path(exists=True))
-@click.option("-r", "--representation", default=["ecfp4_1024"], multiple=True)
-@click.option("-d", "--dataset", default=["tox21"], multiple=True)
-@click.option("-a", "--assay", multiple=True)
-def main(
-    representation_filepath,
-    assay_filepath,
-    output_filepath,
-    representation,
-    dataset,
-    assay,
+
+def train(
+    representation_filepath, assay_filepath, output_filepath, representation, dataset
 ):
+    log_fmt = "%(asctime)s - %(message)s"
+    logging.basicConfig(level=logging.INFO, format=log_fmt)
+
     logger = logging.getLogger(__name__)
     logger.info("loading data...")
 
@@ -38,8 +30,8 @@ def main(
     representation_df = load_representations(representation_query)
 
     # Load the assays
-    assay_dfs = load_assays(assay_filepath, dataset, assay)
-    
+    assay_dfs = load_assays(assay_filepath, dataset)
+
     logger.info("fitting models to assay data...")
 
     # Evaluate each assay
@@ -53,26 +45,16 @@ def main(
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
         # Create a Logistic Regression object
-        log_reg = LogisticRegression()
+        log_reg = LogisticRegression(max_iter=1000)
 
         # Fit the model to the training data
         log_reg.fit(X_train, y_train)
 
-        # Convert the representations tuple into a string with elements separated by '_'
-        representation_str = "_".join(representation)
-
         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_logistic_regression_{representation_str}.pkl"
-        
+        model_path = f"{output_filepath}/{assay_filename}_logistic_{representation}.pkl"
+
         # Save model to a pickle file
         with open(model_path, "wb") as f:
             pickle.dump(log_reg, f)
 
     logger.info(f"trained model(s) saved to {output_filepath}")
-
-
-if __name__ == "__main__":
-    log_fmt = "%(asctime)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
-
-    main()
