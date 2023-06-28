@@ -1,4 +1,5 @@
 #!/bin/bash
+
 python ./src/data/raw_to_assays.py ./data/raw/tox21.csv ./data/processed/assays -d tox21
 
 python ./src/features/make_features.py ./data/processed/assays ./data/processed/features --feature ecfp4_1024
