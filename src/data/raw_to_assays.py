@@ -115,6 +115,9 @@ def process_toxval(input_filepath, identifier):
     # Replace all '_' with '-' in long_ref column
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
 
+    # Apply -log to toxval numeric column
+    df["toxval_numeric"] = -np.log(df["toxval_numeric"])
+
     # Pivot the DataFrame so that each column is a unique assay
     assay_df, lookup_df = pivot_assays(df, assay_components, "toxval_numeric")
 
