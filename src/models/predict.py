@@ -73,7 +73,7 @@ def main(
 
             # Get canonical smiles for index of output prediction parquet file
             test_canonical_smiles = merged_df.loc[
-                merged_df["test_train"] == 1, "canonical_smiles"
+                merged_df["support_query"] == 1, "canonical_smiles"
             ]
 
             # Add predictions to dataframe

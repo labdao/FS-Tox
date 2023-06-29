@@ -10,6 +10,7 @@ from rdkit import RDLogger
 # Suppress RDKit warnings
 RDLogger.DisableLog("rdApp.*")
 
+
 def smiles_to_canonical_smiles(df):
     # Convert smiles to canonical smiles
     mol_objects = df["smiles"].apply(Chem.MolFromSmiles)
@@ -54,23 +55,24 @@ def selfies_encoder(smiles):
     Encodes a SMILES string using the selfies library, handling any exceptions that may occur.
     Parameters:
     smiles (str): The SMILES string to encode.
- 
+
     Returns:
-    str or None: The encoded SELFIES string, or None if an exception occurred during encoding."""
+    str or None: The encoded SELFIES string, or None if an exception occurred during encoding.
+    """
     try:
         return sf.encoder(smiles)
     except Exception as e:
         return None
 
+
 # Define a function to convert InChI to SMILES
 def inchi_to_smiles(inchi):
-
     # Suppress RDKit warnings
     RDLogger.DisableLog("rdApp.*")
-    
+
     mol = Chem.MolFromInchi(inchi)
     if mol is None:
-        return 'InvalidInChI'  # Placeholder for invalid InChI
+        return "InvalidInChI"  # Placeholder for invalid InChI
     smiles = Chem.MolToSmiles(mol)
     return smiles
 
@@ -79,7 +81,6 @@ def pivot_assays(df, assay_components, outcome_col_name):
     # Create a new column that is a combination of the assay_components
     df["combined"] = df[assay_components].apply(
         lambda row: "_".join(row.values.astype(str)), axis=1
-
     )
     # Create a pivot table where each unique combination forms a separate column
     df = df.pivot_table(
@@ -89,13 +90,13 @@ def pivot_assays(df, assay_components, outcome_col_name):
         aggfunc=np.mean,
     )
 
-     # Apply the function to each column
+    # Apply the function to each column
     df = binarize_df(df)
 
     # Remove columns that have fewer than 24 members
     df = df.dropna(thresh=24, axis=1)
 
-    # Get records where the order of magnitude range of the assay outcomes is greater than 2 
+    # Get records where the order of magnitude range of the assay outcomes is greater than 2
     df = df.loc[:, (df.max() / df.min() > 2).values]
 
     # Convert smiles index to column
@@ -107,14 +108,18 @@ def pivot_assays(df, assay_components, outcome_col_name):
     # Get the unique assay names
     assay_names = pd.DataFrame(df.columns[1:], columns=["combined"])
 
+
     # Create a lookup table for the assay names
     lookup_df = assay_names["combined"].str.split("_", expand=True)
 
     # Name the new columns
     lookup_df.columns = assay_components
 
-    # Assign individual assays to either test or train
-    lookup_df["test_train"] = assign_test_train(len(lookup_df), proportions=[0.97, 0.03])
+    # Get the number of small molecules in each assay
+    lookup_df["assay_size"] = df.iloc[:, 1:].count().reset_index(drop=True)
+
+    # Assign assay to test with 0.5 probability if it has greater than 128 members     
+    lookup_df["test_train"] = lookup_df["assay_size"].apply(lambda x: np.random.choice([0, 1], p=[0.5, 0.5]) if x > 128 else 0)
 
     # Simplify the column names
     df.columns = [

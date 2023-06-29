@@ -67,13 +67,13 @@ def load_representations(representation_query):
 
 def mod_test_train_split(merged_df):
     # Split data into train and test - y-test not needed at scoring takes place in separate script
-    y_train = merged_df.loc[merged_df["test_train"] == 0, "ground_truth"]
-    y_test = merged_df.loc[merged_df["test_train"] == 1, "ground_truth"]
-    X_train = merged_df.loc[merged_df["test_train"] == 0].drop(
+    y_train = merged_df.loc[merged_df["support_query"] == 0, "ground_truth"]
+    y_test = merged_df.loc[merged_df["support_query"] == 1, "ground_truth"]
+    X_train = merged_df.loc[merged_df["support_query"] == 0].drop(
         ["canonical_smiles", "ground_truth", "test_train", "assay_id"], axis=1
     )
-    X_test = merged_df.loc[merged_df["test_train"] == 1].drop(
-        ["canonical_smiles", "ground_truth", "test_train", "assay_id"], axis=1
+    X_test = merged_df.loc[merged_df["support_query"] == 1].drop(
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id"], axis=1
     )
 
     return X_train, X_test, y_train, y_test

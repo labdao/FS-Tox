@@ -226,7 +226,7 @@ def convert_to_assay(df, source_id, output_filepath):
         assay_df.reset_index(drop=True, inplace=True)
 
         # Randomly assign each row to train or test
-        assay_df["test_train"] = assign_test_train(len(assay_df))
+        assay_df["support_query"] = assign_test_train(len(assay_df))
 
         # Change assay column label as ground_truth
         assay_df.rename(columns={assay_name: "ground_truth"}, inplace=True)
