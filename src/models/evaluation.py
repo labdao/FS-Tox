@@ -50,7 +50,7 @@ def main(input_filepath, output_filepath, dataset):
         metrics_dict["feature"] = feature_name
         # Calculate common evaluation metrics
         metrics_dict["accuracy"] = accuracy_score(y_true, y_pred)
-        metrics_dict["precision"] = precision_score(y_true, y_pred)
+        metrics_dict["precision"] = precision_score(y_true, y_pred, zero_division=0)
         metrics_dict["recall"] = recall_score(y_true, y_pred)
         metrics_dict["f1"] = f1_score(y_true, y_pred)
         try:

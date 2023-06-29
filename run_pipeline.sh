@@ -1,7 +1,7 @@
 #!/bin/bash
-export input_path=toxval.csv
-export dataset=toxval
-export identifier=toxval_identifiers.csv
+export input_path=nci60/LC50/LC50.csv
+export dataset=nci60
+export identifier=nci60_identifiers.txt
 
 python ./src/data/raw_to_assays.py ./data/raw/$input_path ./data/processed/assays --dataset $dataset --identifier ./data/external/$identifier
 

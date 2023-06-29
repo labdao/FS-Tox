@@ -83,7 +83,7 @@ def main(
                     "preds": preds,
                     "preds_proba": preds_proba,
                     "ground_truth": y_test,
-                    "model": model[0],
+                    "model": model,
                 }
             )
 

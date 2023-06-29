@@ -261,7 +261,7 @@ def convert_to_assay(df, source_id, output_filepath):
 )
 def main(input_filepath, output_filepath, dataset, identifier):
     logger = logging.getLogger(__name__)
-    logger.info("converting raw data to individual assay parquet files")
+    logger.info("converting raw data to individual assay parquet files...")
 
     # Create interim parquet file for each dataset
     if dataset == "tox21":
