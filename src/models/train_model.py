@@ -12,9 +12,7 @@ import logistic_fit
 @click.option("-f", "--feature", default="ecfp4_1024")
 @click.option("-m", "--model", default="logistic")
 def main(feature_filepath, assay_filepath, output_filepath, feature, dataset, model):
-    logger = logging.getLogger(__name__)
-    logger.info("training models...")
-
+    
     if model == "logistic":
         logistic_fit.train(feature_filepath, assay_filepath, output_filepath, feature, dataset)
     elif model == "xgboost":

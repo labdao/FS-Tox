@@ -52,7 +52,7 @@ def train(
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
-    logger.info("loading data...")
+    logger.info("loading features...")
 
     # Create a SQL query as a string to select relevant representations
     representation_query = construct_query(representation_filepath, representation)
@@ -120,4 +120,4 @@ def train(
         with open(model_path, "wb") as f:
             pickle.dump(model, f)
 
-    logger.info(f"trained model(s) saved to {output_filepath}")
+        logger.info(f"successfully trained {i+1} xgboost models.")

@@ -46,9 +46,9 @@ def main(
         # Load the assays
         assay_dfs = load_assays(assay_filepath, dataset)
 
+        logger.info(f"creating predictions for {dataset}...")
         # Evaluate each assay
         for i, (assay_df, assay_filename) in enumerate(assay_dfs):
-            logger.info(f"creating predictions for assay {i+1}...")
 
             # Merge the representations and assays
             merged_df = pd.merge(
@@ -91,6 +91,7 @@ def main(
             preds_df.to_parquet(
                 f"{prediction_filepath}/{assay_filename}_{model}_{representation}.parquet"
             )
+        logger.info(f"predictions created for {i+1} models.")
 
     else:
         # Get model filepath
