@@ -11,7 +11,8 @@ import logging
 @click.argument("input_filepath", type=click.Path(exists=True), default="data/processed/scores")
 @click.option("-f", "--feature", default="ecfp4_1024")
 @click.option("-d", "--dataset")
-def main(input_filepath, feature, dataset):
+@click.option("-m", "--metric", default="auc_roc")
+def main(input_filepath, feature, dataset, metric):
     con = duckdb.connect()
 
     logging.info(f"Loading evaluation metrics from {input_filepath}...")
@@ -25,7 +26,7 @@ def main(input_filepath, feature, dataset):
     # Load scoring data from parquet files
     pred_df = con.execute(
         f"""
-            SELECT feature, auc_roc
+            SELECT feature, {metric}
             FROM read_parquet({score_filepaths_as_str})
             """
     ).fetchdf()
@@ -37,8 +38,8 @@ def main(input_filepath, feature, dataset):
     logging.info("Creating swarmplot...")
     
     # Create swarmplot
-    sns.swarmplot(x=pred_df["feature"], y=pred_df["auc_roc"], hue=pred_df["feature"], palette='Set2')
-    plt.title(f"Swarmplot of AUC-ROC scores for assays in {dataset}")
+    sns.swarmplot(x=pred_df["feature"], y=pred_df[metric], hue=pred_df["feature"], palette='Set2')
+    plt.title(f"Swarmplot of {metric} scores for assays in {dataset}")
 
     plt.show()
 
