@@ -167,6 +167,32 @@ def process_nci60(input_filepath, identifier_filepath):
 
     return df
 
+def process_cancerrx(input_filepath):
+    df = pd.read_csv(input_filepath)
+
+    # Change "SMILES" column name to "smiles"
+    df.rename(columns={"SMILES": "smiles"}, inplace=True)
+
+    # Set the assay components
+    assay_components = ["CELL_LINE_NAME"]
+    
+    # Convert the LN_IC50 column to negative
+    df["LN_IC50"] = -(df["LN_IC50"])
+
+    # Convert the SMILES column to canonical smiles
+    df = smiles_to_canonical_smiles(df)
+
+    # Drop rows where canonical_smiles is null
+    df.dropna(subset=["canonical_smiles"], inplace=True)
+
+    # Pivot the DataFrame so that each column is a unique assay
+    df, lookup_df = pivot_assays(df, assay_components, "LN_IC50")
+
+    # Save the lookup table
+    lookup_df.to_csv(os.path.join("./data/processed/assay_lookup/cancerrx_lookup.csv"), index=False)
+    
+    return df
+
 
 def convert_to_assay(df, source_id, output_filepath):
     """
@@ -250,8 +276,8 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', or 'nci60'.",
+    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60", "cancerrx"]),
+    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx'.",
 )
 @click.option(
     "-i",
@@ -276,6 +302,8 @@ def main(input_filepath, output_filepath, dataset, identifier):
         df = process_toxval(input_filepath, identifier)
     elif dataset == "nci60":
         df = process_nci60(input_filepath, identifier)
+    elif dataset == "cancerrx":
+        df = process_cancerrx(input_filepath)
 
     # Set source_id as the dataset name
     source_id = dataset

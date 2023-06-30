@@ -34,7 +34,6 @@ def main(
     assay,
 ):
     logger = logging.getLogger(__name__)
-    logger.info("loading data...")
 
     # Create a SQL query as a string to select relevant representations
     representation_query = construct_query(representation_filepath, representation)

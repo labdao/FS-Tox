@@ -90,14 +90,14 @@ def pivot_assays(df, assay_components, outcome_col_name):
         aggfunc=np.mean,
     )
 
+    # Get records where the order of magnitude range of the assay outcomes is greater than 2
+    df = df.loc[:, (df.max() - df.min() > 2).values]
+
     # Apply the function to each column
     df = binarize_df(df)
 
     # Remove columns that have fewer than 24 members
     df = df.dropna(thresh=24, axis=1)
-
-    # Get records where the order of magnitude range of the assay outcomes is greater than 2
-    df = df.loc[:, (df.max() / df.min() > 2).values]
 
     # Convert smiles index to column
     df = df.reset_index()
@@ -108,9 +108,8 @@ def pivot_assays(df, assay_components, outcome_col_name):
     # Get the unique assay names
     assay_names = pd.DataFrame(df.columns[1:], columns=["combined"])
 
-
-    # Create a lookup table for the assay names
-    lookup_df = assay_names["combined"].str.split("_", expand=True)
+    # Create a lookup table for the assay names if assay components is greater than 1
+    lookup_df = assay_names["combined"].str.split("_", expand=True) if len(assay_components) > 1 else assay_names
 
     # Name the new columns
     lookup_df.columns = assay_components

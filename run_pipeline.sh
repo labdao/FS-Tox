@@ -1,9 +1,9 @@
 #!/bin/bash
-export input_path=nci60/LC50/LC50.csv
-export dataset=nci60
-export identifier=nci60_identifiers.txt
+export input_path=cancerrx_pubchem.csv
+export dataset=cancerrx
+# export identifier=nci60_identifiers.txt
 
-python ./src/data/raw_to_assays.py ./data/raw/$input_path ./data/processed/assays --dataset $dataset --identifier ./data/external/$identifier
+python ./src/data/raw_to_assays.py ./data/raw/$input_path ./data/processed/assays --dataset $dataset
 
 python ./src/features/make_features.py ./data/processed/assays ./data/processed/features --feature ecfp4_1024
 
