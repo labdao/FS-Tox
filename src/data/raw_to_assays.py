@@ -7,7 +7,14 @@ from rdkit import RDLogger
 import numpy as np
 
 
-from utils import inchi_to_smiles, smiles_to_canonical_smiles, selfies_encoder, assign_test_train, pivot_assays
+from utils import (
+    inchi_to_smiles,
+    smiles_to_canonical_smiles,
+    selfies_encoder,
+    assign_test_train,
+    pivot_assays,
+)
+
 
 def process_tox21(input_filepath):
     """Process the tox21 dataset."""
@@ -104,10 +111,10 @@ def process_toxval(input_filepath, identifier):
     df = df.reset_index(drop=True)
 
     # Add the smiles column to the DataFrame
-    df["canonical_smiles"] = canonical_smiles
+    df["smiles"] = canonical_smiles
 
     # Drop rows where smiles column is equal to 'InvalidInChI'
-    df = df[df["canonical_smiles"] != "InvalidInChI"]
+    df = df[df["smiles"] != "InvalidInChI"]
 
     # Get records that belong to a group of greater than 10 members
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
@@ -122,14 +129,16 @@ def process_toxval(input_filepath, identifier):
     assay_df, lookup_df = pivot_assays(df, assay_components, "toxval_numeric")
 
     # Save the lookup table
-    lookup_df.to_csv(os.path.join(f"./data/processed/assay_lookup/toxval_lookup.csv"), index=False)
+    lookup_df.to_csv(
+        os.path.join(f"./data/processed/assay_lookup/toxval_lookup.csv"), index=False
+    )
 
     return assay_df
 
 
 def process_nci60(input_filepath, identifier_filepath):
     df = pd.read_csv(input_filepath)
-    
+
     # Columns to group by
     assay_components = ["PANEL_NAME", "CELL_NAME", "CONCENTRATION_UNIT", "EXPID"]
 
@@ -141,31 +150,39 @@ def process_nci60(input_filepath, identifier_filepath):
 
     # Read in the identifiers
     identifier_col_names = ["nsc", "casrn", "smiles"]
-    identifiers = pd.read_csv(identifier_filepath, delim_whitespace=True, names=identifier_col_names)
+    identifiers = pd.read_csv(
+        identifier_filepath, delim_whitespace=True, names=identifier_col_names
+    )
 
     # Merge the filtered DataFrame with the identifiers
     df = pd.merge(df, identifiers, left_on="NSC", right_on="nsc", how="inner")
 
-    if os.path.isfile('temp_data.pkl'):
-        df = pd.read_pickle('temp_data.pkl')
+    if os.path.isfile("temp_data.pkl"):
+        df = pd.read_pickle("temp_data.pkl")
     else:
         # Get canonical smiles
         df = smiles_to_canonical_smiles(df)
-        df.to_pickle('temp_data.pkl')
-        
-    # Drop rows where canonical_smiles is null
-    df.dropna(subset=["canonical_smiles"], inplace=True)
+        df.to_pickle("temp_data.pkl")
+    
+    # Rename canonical_smiles column to smiles
+    df.rename(columns={"canonical_smiles": "smiles"}, inplace=True)
 
-    # Remove records that belong to a group of fewer than 24 members after removing null canonical_smiles
+    # Drop rows where smiles is null
+    df.dropna(subset=["smiles"], inplace=True)
+
+    # Remove records that belong to a group of fewer than 24 members after removing null smiles
     df = df.groupby(assay_components).filter(lambda x: len(x) >= 32)
 
     # Pivot the DataFrame so that each column is a unique assay
     df, lookup_df = pivot_assays(df, assay_components, "AVERAGE")
 
     # Save the lookup table
-    lookup_df.to_csv(os.path.join("./data/processed/assay_lookup/nci60_lookup.csv"), index=False)
+    lookup_df.to_csv(
+        os.path.join("./data/processed/assay_lookup/nci60_lookup.csv"), index=False
+    )
 
     return df
+
 
 def process_cancerrx(input_filepath):
     df = pd.read_csv(input_filepath)
@@ -175,26 +192,59 @@ def process_cancerrx(input_filepath):
 
     # Set the assay components
     assay_components = ["CELL_LINE_NAME"]
-    
+
     # Convert the LN_IC50 column to negative
     df["LN_IC50"] = -(df["LN_IC50"])
 
-    # Convert the SMILES column to canonical smiles
+    # Convert the SMILES column to canonical smiles
     df = smiles_to_canonical_smiles(df)
 
-    # Drop rows where canonical_smiles is null
-    df.dropna(subset=["canonical_smiles"], inplace=True)
+    # Rename canonical_smiles column to smiles
+    df.rename(columns={"canonical_smiles": "smiles"}, inplace=True)
+
+    # Drop rows where smiles is null
+    df.dropna(subset=["smiles"], inplace=True)
 
     # Pivot the DataFrame so that each column is a unique assay
     df, lookup_df = pivot_assays(df, assay_components, "LN_IC50")
 
     # Save the lookup table
-    lookup_df.to_csv(os.path.join("./data/processed/assay_lookup/cancerrx_lookup.csv"), index=False)
-    
+    lookup_df.to_csv(
+        os.path.join("./data/processed/assay_lookup/cancerrx_lookup.csv"), index=False
+    )
+
     return df
 
 
-def convert_to_assay(df, source_id, output_filepath):
+def process_prism(input_filepath):
+    df = pd.read_csv(input_filepath)
+
+    # Set the assay components
+    assay_components = ["ccle_name"]
+
+    # Convert the SMILES column to canonical smiles
+    df = smiles_to_canonical_smiles(df)
+
+    # Drop rows where canonical_smiles or  is null
+    df.dropna(subset=["canonical_smiles"], inplace=True)
+
+    # Convert LC50 to negative log
+    df["ec50"] = -np.log(df["ec50"])
+
+    # Pivot the DataFrame so that each column is a unique assay
+    df, lookup_df = pivot_assays(df, assay_components, "ec50")
+
+    # Save the lookup table
+    lookup_df.to_csv(
+        os.path.join("./data/processed/assay_lookup/prism_lookup.csv"), index=False
+    )
+
+    return df
+
+
+def convert_to_assay(
+    df, source_id, output_filepath
+    ):
     """
     Converts an unprocessed DataFrame to individual parquet files for each assay.
 
@@ -213,19 +263,20 @@ def convert_to_assay(df, source_id, output_filepath):
                the number of 'canonical_smiles' that could not be converted to 'selfies' (int),
                and the number of assays successfully converted (int).
     """
+    # Drop rows with null smiles
+    df.dropna(subset=["smiles"], inplace=True)
 
     # Suppress RDKit warnings
     RDLogger.DisableLog("rdApp.*")
 
-    # Convert smiles to canonical smiles if not already done
-    if "canonical_smiles" not in df.columns:
-        df = smiles_to_canonical_smiles(df, "smiles")
+    # Convert smiles to canonical smiles
+    df = smiles_to_canonical_smiles(df)
 
     # Get assay names
     all_columns = df.columns.tolist()
     assay_names = [col for col in all_columns if col != "canonical_smiles"]
 
-    # Create selfie column
+    # Create selfies column
     df["selfies"] = df["canonical_smiles"].apply(
         lambda x: selfies_encoder(x) if x is not None else None
     )
@@ -276,8 +327,10 @@ def convert_to_assay(df, source_id, output_filepath):
 @click.option(
     "-d",
     "--dataset",
-    type=click.Choice(["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60", "cancerrx"]),
-    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx'.",
+    type=click.Choice(
+        ["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60", "cancerrx", "prism"]
+    ),
+    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'.",
 )
 @click.option(
     "-i",
@@ -304,6 +357,8 @@ def main(input_filepath, output_filepath, dataset, identifier):
         df = process_nci60(input_filepath, identifier)
     elif dataset == "cancerrx":
         df = process_cancerrx(input_filepath)
+    elif dataset == "prism":
+        df = process_prism(input_filepath)
 
     # Set source_id as the dataset name
     source_id = dataset

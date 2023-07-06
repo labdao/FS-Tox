@@ -12,11 +12,13 @@ from sklearn.metrics import (
     average_precision_score,
 )
 
+
 @click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.argument("output_filepath", type=click.Path())
+@click.argument("input_filepath", type=click.Path(exists=True), default="data/processed/predictions")
+@click.argument("output_filepath", type=click.Path(), default="data/processed/scores")
+@click.argument("assay_filepath", type=click.Path(), default="data/processed/assays")
 @click.option("-d", "--dataset")
-def main(input_filepath, output_filepath, dataset):
+def main(input_filepath, output_filepath, assay_filepath, dataset):
     logger = logging.getLogger(__name__)
     logger.info("Reading data from %s", input_filepath)
 
@@ -24,9 +26,7 @@ def main(input_filepath, output_filepath, dataset):
     pred_filenames = []
 
     if dataset:
-        pred_filenames = [
-            f for f in os.listdir(input_filepath) if dataset in f
-        ]
+        pred_filenames = [f for f in os.listdir(input_filepath) if dataset in f]
 
     # Create a list to store the metric dictionaries
     feature_performance = []
@@ -53,12 +53,25 @@ def main(input_filepath, output_filepath, dataset):
         metrics_dict["precision"] = precision_score(y_true, y_pred, zero_division=0)
         metrics_dict["recall"] = recall_score(y_true, y_pred)
         metrics_dict["f1"] = f1_score(y_true, y_pred)
+
         try:
             y_score = df["preds_proba"]
             metrics_dict["auc_roc"] = roc_auc_score(y_true, y_score)
-            metrics_dict["auc_pr"] = average_precision_score(
-                y_true, y_score
-            )  # calculate AUC-PR
+            auc_pr = average_precision_score(y_true, y_score)
+
+            # Get the assay name from the filename
+            assay_name = "_".join(pred_filename.split("_")[:3])
+            # Load the ground truth data
+            ratio_df = pd.read_parquet(
+                f"{assay_filepath}/{assay_name}.parquet",
+                columns=["ground_truth", "support_query"],
+            )
+            # Filter the ground truth data to only include the support query
+            ratio_df = ratio_df[ratio_df["support_query"] == 1]
+            # Calculate the delta AUC PR
+            delta_auc = auc_pr - (ratio_df["ground_truth"].sum() / len(ratio_df))
+            metrics_dict["delta_auc_pr"] = delta_auc
+
         except ValueError as e:
             logger.warn(
                 "Cannot compute ROC AUC score because ground truth data contains only one class. Outputting NaN for ROC AUC"

@@ -18,6 +18,9 @@ def smiles_to_canonical_smiles(df):
         lambda x: Chem.MolToSmiles(x) if x is not None else None
     )
 
+    # Drop the smiles column
+    df.drop("smiles", axis=1, inplace=True)
+
     return df
 
 
@@ -84,7 +87,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
     )
     # Create a pivot table where each unique combination forms a separate column
     df = df.pivot_table(
-        index="canonical_smiles",
+        index="smiles",
         columns="combined",
         values=outcome_col_name,
         aggfunc=np.mean,
@@ -122,7 +125,7 @@ def pivot_assays(df, assay_components, outcome_col_name):
 
     # Simplify the column names
     df.columns = [
-        f"assay_{i}" if col != "canonical_smiles" else col
+        f"assay_{i}" if col != "smiles" else col
         for i, col in enumerate(df.columns)
     ]
 

@@ -35,6 +35,7 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	find . -type f -name "*parquet" -delete
 	find . -type f -name "*pkl" -delete
+	find . -type f -name "*_lookup.csv" -delete
 
 ## Lint using flake8
 lint:
