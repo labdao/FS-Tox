@@ -219,7 +219,7 @@ def process_prism(input_filepath):
     return df
 
 
-def convert_to_parquets(df, source_id, output_filepath):
+def convert_to_parquets(df, source_id, output_filepath, support_set_size):
     """
     Converts an unprocessed DataFrame to individual parquet files for each assay.
 
@@ -249,7 +249,7 @@ def convert_to_parquets(df, source_id, output_filepath):
         assay_df.reset_index(drop=True, inplace=True)
 
         # Randomly assign each row to train or test
-        assay_df["support_query"] = assign_test_train(len(assay_df))
+        assay_df["support_query"] = assign_test_train(len(assay_df), support_set_size)
 
         # Rename assay column label to 'ground_truth'
         assay_df.rename(columns={assay_name: "ground_truth"}, inplace=True)
@@ -286,12 +286,19 @@ def convert_to_parquets(df, source_id, output_filepath):
 )
 @click.option(
     "-s",
-    "--size",
+    "--assay-size",
     type=int,
     help="The minimum number of records for an assay to be included.",
     default=32,
 )
-def main(input_filepath, output_filepath, dataset, identifier, size):
+@click.option(
+    "-q",
+    "--support-set-size",
+    type=int,
+    help="The number of records to be used for the support set.",
+    default=16,
+)
+def main(input_filepath, output_filepath, dataset, identifier, assay_size, support_set_size):
     logger = logging.getLogger(__name__)
     logger.info("converting raw data to individual assay parquet files...")
 
@@ -325,7 +332,7 @@ def main(input_filepath, output_filepath, dataset, identifier, size):
     df = smiles_to_canonical_smiles(df)
 
     # Remove columns with fewer non-null values than specified size
-    df = df.loc[:, (df.count() >= size).values]
+    df = df.loc[:, (df.count() >= assay_size).values]
 
     # Convert the list of column names to a lookup DataFrame
     lookup_df = pd.DataFrame(assay_names, columns=["assay"])
@@ -342,7 +349,7 @@ def main(input_filepath, output_filepath, dataset, identifier, size):
     ]
 
     # Convert the assay DataFrame to individual parquet files
-    convert_to_parquets(df, dataset, output_filepath)
+    convert_to_parquets(df, dataset, output_filepath, support_set_size)
 
     logger.info("created %d individual assay parquet files.", df.shape[1] - 1)
 

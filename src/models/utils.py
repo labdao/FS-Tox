@@ -28,8 +28,8 @@ def load_assays(input_filepath, dataset):
     for filename in filenames:
         df = pd.read_parquet(filename)
 
-        # Drop the source_id and selfies columns
-        df.drop(["source_id", "selfies"], axis=1, inplace=True)
+        # Drop the source_id column
+        df.drop("source_id", axis=1, inplace=True)
 
         # Get file basename
         assay_basename = os.path.basename(filename)

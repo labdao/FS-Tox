@@ -3,7 +3,6 @@ from rdkit import Chem
 
 import pandas as pd
 import numpy as np
-import selfies as sf
 import os
 from rdkit import RDLogger
 import requests
@@ -167,12 +166,13 @@ def binarize_assays(df):
     return df
 
 
-def assign_test_train(df_len, proportions=[0.5, 0.5]):
+def assign_test_train(df_len, size_train):
     """
     Creates a pandas Series with random assignment of each row to test or train.
 
     Parameters:
     df_len (int): The length of the DataFrame to create the test-train split for.
+    size_train (int): The size of the train set.
 
     Returns:
     pd.Series: A pandas Series with random assignment of each row to test (0) or train (1).
@@ -181,7 +181,13 @@ def assign_test_train(df_len, proportions=[0.5, 0.5]):
     # Set seed for reproducibility
     np.random.seed(42)
 
-    # Create a random series with the desired proportions
-    test_train = pd.Series(np.random.choice([0, 1], size=df_len, p=proportions))
+    # Create a list with size_train 0s and (df_len - size_train) 1s
+    assignment_list = [0]*size_train + [1]*(df_len - size_train)
+    
+    # Shuffle the list
+    np.random.shuffle(assignment_list)
+    
+    # Convert the list to a pandas Series
+    test_train = pd.Series(assignment_list)
 
     return test_train

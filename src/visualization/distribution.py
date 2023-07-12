@@ -5,14 +5,18 @@ import pandas as pd
 import duckdb
 import click
 import logging
+import neptune
+
+run = neptune.init_run(name="Test")
 
 
 @click.command()
 @click.argument("input_filepath", type=click.Path(exists=True), default="data/processed/scores")
+@click.argument("output_filepath", type=click.Path(), default="data/processed/visualizations")
 @click.option("-f", "--feature", default="ecfp4_1024")
 @click.option("-d", "--dataset", default="tox21")
 @click.option("-m", "--metric", default="auc_roc")
-def main(input_filepath, feature, dataset, metric):
+def main(input_filepath, output_filepath, feature, dataset, metric):
     con = duckdb.connect()
 
     logging.info(f"Loading evaluation metrics from {input_filepath}...")
@@ -34,12 +38,14 @@ def main(input_filepath, feature, dataset, metric):
     logging.info("Creating distribution...")
 
     # Create distribution plot
-    sns.distplot(pred_df[metric], kde=False, rug=True)
+    sns.displot(pred_df[metric], kde=False, rug=True)
     plt.title(f"Distribution of {metric} scores for assays in {dataset}")
     plt.xlabel(f"{metric} score")
     plt.ylabel("Count")
-    plt.show()
+    plt.savefig(f"{output_filepath}/{dataset}_{feature}_{metric}_distribution.png")
+    run["chart"].upload(f"{output_filepath}/{dataset}_{feature}_{metric}_distribution.png")
 
+    run.stop()
 
 if __name__ == "__main__":
     log_fmt = "%(asctime)s - %(message)s"
