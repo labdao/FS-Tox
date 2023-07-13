@@ -18,7 +18,8 @@ from sklearn.metrics import (
 @click.argument("output_filepath", type=click.Path(), default="data/processed/scores")
 @click.argument("assay_filepath", type=click.Path(), default="data/processed/assays")
 @click.option("-d", "--dataset")
-def main(input_filepath, output_filepath, assay_filepath, dataset):
+@click.option("-q", "--support-query", type=int, default=16)
+def main(input_filepath, output_filepath, assay_filepath, dataset, support_query):
     logger = logging.getLogger(__name__)
     logger.info("Reading data from %s", input_filepath)
 
@@ -27,9 +28,6 @@ def main(input_filepath, output_filepath, assay_filepath, dataset):
 
     if dataset:
         pred_filenames = [f for f in os.listdir(input_filepath) if dataset in f]
-
-    # Create a list to store the metric dictionaries
-    feature_performance = []
 
     for pred_filename in pred_filenames:
         # Create empty dictionary to store metrics
@@ -48,6 +46,8 @@ def main(input_filepath, output_filepath, assay_filepath, dataset):
 
         # Add feature name to metrics_dict
         metrics_dict["feature"] = feature_name
+        # Add support size to metrics_dict
+        metrics_dict["support_size"] = support_query
         # Calculate common evaluation metrics
         metrics_dict["accuracy"] = accuracy_score(y_true, y_pred)
         metrics_dict["precision"] = precision_score(y_true, y_pred, zero_division=0)
@@ -85,7 +85,7 @@ def main(input_filepath, output_filepath, assay_filepath, dataset):
         assay_feature_name = pred_filename.replace("preds_", "").split(".")[0]
 
         # Save inidividual assay metrics to a parquet file
-        metrics_df.to_parquet(f"{output_filepath}/{assay_feature_name}.parquet")
+        metrics_df.to_parquet(f"{output_filepath}/{assay_feature_name}_{support_query}.parquet")
 
     logger.info("Saved metrics to %s", output_filepath)
 

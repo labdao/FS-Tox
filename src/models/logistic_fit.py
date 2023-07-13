@@ -47,6 +47,7 @@ def train(
         # Create a Logistic Regression object
         log_reg = LogisticRegression(max_iter=1000)
 
+        
         # Fit the model to the training data
         log_reg.fit(X_train, y_train)
 

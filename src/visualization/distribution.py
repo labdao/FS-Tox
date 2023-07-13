@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 import pandas as pd
 import duckdb
 import click
 import logging
 import neptune
 
-run = neptune.init_run(name="Test")
+run = neptune.init_run()
 
 
 @click.command()
@@ -22,7 +21,7 @@ def main(input_filepath, output_filepath, feature, dataset, metric):
     logging.info(f"Loading evaluation metrics from {input_filepath}...")
 
     # Create filepath pattern for each feature
-    score_filepaths = [f"{input_filepath}/*{dataset}*{feature}.parquet"]
+    score_filepaths = [f"{input_filepath}/*{dataset}*{feature}*.parquet"]
 
     # Convert list to string so it can be incorporated into the SQL query
     score_filepaths_as_str = str(score_filepaths)
@@ -34,6 +33,8 @@ def main(input_filepath, output_filepath, feature, dataset, metric):
             FROM read_parquet({score_filepaths_as_str})
             """
     ).fetchdf()
+
+    pred_df.to_csv(f"{output_filepath}/{dataset}_{feature}_{metric}_distribution.csv")
     
     logging.info("Creating distribution...")
 

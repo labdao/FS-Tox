@@ -111,6 +111,9 @@ def process_toxval(input_filepath, identifier):
     # Replace all '_' with '-' in long_ref column
     df["long_ref"] = df["long_ref"].str.replace("_", "-")
 
+    # Filter out any rows with 0 for toxval_numeric
+    df = df[df["toxval_numeric"] != 0]
+
     # Apply -log to toxval numeric column
     df["toxval_numeric"] = -np.log(df["toxval_numeric"])
 
@@ -286,21 +289,21 @@ def convert_to_parquets(df, source_id, output_filepath, support_set_size):
 )
 @click.option(
     "-s",
-    "--assay-size",
+    "--assay_size",
     type=int,
     help="The minimum number of records for an assay to be included.",
     default=32,
 )
 @click.option(
     "-q",
-    "--support-set-size",
+    "--support_set_size",
     type=int,
     help="The number of records to be used for the support set.",
     default=16,
 )
 def main(input_filepath, output_filepath, dataset, identifier, assay_size, support_set_size):
     logger = logging.getLogger(__name__)
-    logger.info("converting raw data to individual assay parquet files...")
+    logger.info("converting %s raw data to individual assay parquet files...", dataset)
 
     # Return DataFrame with binary outcomes for each assay and a lookup table
     if dataset == "tox21":
@@ -312,9 +315,9 @@ def main(input_filepath, output_filepath, dataset, identifier, assay_size, suppo
     elif dataset == "bbbp":
         df = process_bbbp(input_filepath)
     elif dataset == "toxval":
-        df = process_toxval(input_filepath, identifier)
+        df = process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
     elif dataset == "nci60":
-        df = process_nci60(input_filepath, identifier)
+        df = process_nci60(input_filepath, "data/external/nci60_identifiers.txt")
     elif dataset == "cancerrx":
         df = process_cancerrx(input_filepath)
     elif dataset == "prism":
