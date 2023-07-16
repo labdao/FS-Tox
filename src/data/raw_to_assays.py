@@ -1,13 +1,13 @@
 import os
-import logging
 import click
 import pandas as pd
 from rdkit import Chem
 from rdkit import RDLogger
 import numpy as np
+import logging
 
 
-from utils import (
+from .utils import (
     filter_by_active_ratio,
     inchi_to_smiles,
     smiles_to_canonical_smiles,
@@ -15,7 +15,7 @@ from utils import (
     pivot_assays,
     binarize_assays,
     filter_by_range,
-    drug_name_to_smiles
+    drug_name_to_smiles,
 )
 
 
@@ -59,10 +59,7 @@ def process_toxval(input_filepath, identifier):
     """Process the toxval dataset."""
 
     # List of columns to extract from raw data
-    identifiers = [
-        "dtxsid",
-        "casrn"
-    ]
+    identifiers = ["dtxsid", "casrn"]
 
     additional_cols = "toxval_numeric_qualifier"
 
@@ -78,7 +75,10 @@ def process_toxval(input_filepath, identifier):
         "source",
     ]
 
-    df = pd.read_csv(input_filepath, usecols=identifiers + [outcome] + assay_components + [additional_cols])
+    df = pd.read_csv(
+        input_filepath,
+        usecols=identifiers + [outcome] + assay_components + [additional_cols],
+    )
 
     # Replace '-' in outcome col with np.nan
     df["toxval_numeric"].replace("-", np.nan, inplace=True)
@@ -173,7 +173,7 @@ def process_cancerrx(input_filepath):
 
     # Change "SMILES" column name to "smiles"
     df.rename(columns={"SMILES": "smiles"}, inplace=True)
-    
+
     # Convert drug names to smiles
     df = drug_name_to_smiles(df)
 
@@ -270,38 +270,9 @@ def convert_to_parquets(df, source_id, output_filepath, support_set_size):
         assay_df.to_parquet(f"{output_filepath}/{assay_name}_{source_id}.parquet")
 
 
-@click.command(help="This command converts raw data to individual assay parquet files.")
-@click.argument("input_filepath", type=click.Path())
-@click.argument("output_filepath", type=click.Path(), default="data/processed/assays")
-@click.option(
-    "-d",
-    "--dataset",
-    type=click.Choice(
-        ["tox21", "clintox", "toxcast", "bbbp", "toxval", "nci60", "cancerrx", "prism"]
-    ),
-    help="The name of the dataset to wrangle. This must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'.",
-)
-@click.option(
-    "-i",
-    "--identifier",
-    type=click.Path(),
-    help="Filepath for chemical identifiers for toxvaldb and nci60.",
-)
-@click.option(
-    "-s",
-    "--assay_size",
-    type=int,
-    help="The minimum number of records for an assay to be included.",
-    default=32,
-)
-@click.option(
-    "-q",
-    "--support_set_size",
-    type=int,
-    help="The number of records to be used for the support set.",
-    default=16,
-)
-def main(input_filepath, output_filepath, dataset, identifier, assay_size, support_set_size):
+def make_assays(
+    input_filepath, output_filepath, assay_id_path, dataset, identifier, assay_size, support_set_size
+):
     logger = logging.getLogger(__name__)
     logger.info("converting %s raw data to individual assay parquet files...", dataset)
 
@@ -323,13 +294,13 @@ def main(input_filepath, output_filepath, dataset, identifier, assay_size, suppo
     elif dataset == "prism":
         df = process_prism(input_filepath)
     else:
-        raise ValueError("dataset must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'.")
+        raise ValueError(
+            "dataset must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'."
+        )
 
     # Remove columns not in active ratio range
     df = filter_by_active_ratio(df)
 
-    # Get assay names
-    assay_names = [col for col in df.columns if col != "smiles"]
 
     # Convert smiles to canonical_smiles
     df = smiles_to_canonical_smiles(df)
@@ -337,17 +308,25 @@ def main(input_filepath, output_filepath, dataset, identifier, assay_size, suppo
     # Remove columns with fewer non-null values than specified size
     df = df.loc[:, (df.count() >= assay_size).values]
 
+    # Get assay names
+    assay_names = [col for col in df.columns if col != "canonical_smiles"]
+
     # Convert the list of column names to a lookup DataFrame
-    lookup_df = pd.DataFrame(assay_names, columns=["assay"])
+    lookup_df = pd.DataFrame(
+        {"assay_name": assay_names, "assay_id": range(len(assay_names))}
+    )
 
     # Save lookup_df
-    lookup_df.to_csv(
-        os.path.join(f"./data/processed/assay_lookup/{dataset}_lookup.csv"), index=False
+    lookup_df.to_parquet(
+        os.path.join(
+            f"{assay_id_path}/{dataset}_lookup_assay-size-{assay_size}_support-size-{support_set_size}.parquet"
+        ),
+        index=False,
     )
 
     # Convert column names to standard identifiers
     df.columns = [
-        f"assay_{i+1}" if col != "canonical_smiles" else col
+        f"assay_{i}" if col != "canonical_smiles" else col
         for i, col in enumerate(df.columns)
     ]
 
@@ -355,10 +334,3 @@ def main(input_filepath, output_filepath, dataset, identifier, assay_size, suppo
     convert_to_parquets(df, dataset, output_filepath, support_set_size)
 
     logger.info("created %d individual assay parquet files.", df.shape[1] - 1)
-
-
-if __name__ == "__main__":
-    LOG_FMT = "%(asctime)s - %(message)s"
-    logging.basicConfig(level=logging.INFO, format=LOG_FMT)
-
-    main()

@@ -8,7 +8,7 @@ import os
 import logging
 import click
 
-from utils import (
+from .utils import (
     load_assays,
     load_representations,
     construct_query,
@@ -77,7 +77,7 @@ def train(
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
         if i < 5:
-            logger.info(f"conducting hyperparameter search for assay {i+1}...")
+            logger.info(f"conducting hyperparameter search for assay {i}...")
 
             # Conduct hyperparameter search
             best_params = param_search(X_train, y_train)

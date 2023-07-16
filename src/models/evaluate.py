@@ -12,14 +12,7 @@ from sklearn.metrics import (
     average_precision_score,
 )
 
-
-@click.command()
-@click.argument("input_filepath", type=click.Path(exists=True), default="data/processed/predictions")
-@click.argument("output_filepath", type=click.Path(), default="data/processed/scores")
-@click.argument("assay_filepath", type=click.Path(), default="data/processed/assays")
-@click.option("-d", "--dataset")
-@click.option("-q", "--support-query", type=int, default=16)
-def main(input_filepath, output_filepath, assay_filepath, dataset, support_query):
+def evaluate_predictions(input_filepath, output_filepath, assay_filepath, dataset, support_query):
     logger = logging.getLogger(__name__)
     logger.info("Reading data from %s", input_filepath)
 
@@ -46,8 +39,7 @@ def main(input_filepath, output_filepath, assay_filepath, dataset, support_query
 
         # Add feature name to metrics_dict
         metrics_dict["feature"] = feature_name
-        # Add support size to metrics_dict
-        metrics_dict["support_size"] = support_query
+
         # Calculate common evaluation metrics
         metrics_dict["accuracy"] = accuracy_score(y_true, y_pred)
         metrics_dict["precision"] = precision_score(y_true, y_pred, zero_division=0)

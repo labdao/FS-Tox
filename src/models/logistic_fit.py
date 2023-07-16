@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import pickle
 
-from utils import (
+from .utils import (
     construct_query,
     mod_test_train_split,
     load_representations,
@@ -43,6 +43,12 @@ def train(
 
         # Conduct test train split
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
+
+        # Check if y_train has more than one unique class
+        if len(pd.unique(y_train)) < 2:
+            logger.info("Skipping model training for %s due to lack of classes.", assay_filename)
+            continue
+
 
         # Create a Logistic Regression object
         log_reg = LogisticRegression(max_iter=1000)

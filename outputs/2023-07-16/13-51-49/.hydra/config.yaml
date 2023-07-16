@@ -1,0 +1,16 @@
+paths:
+  raw: ${hydra:runtime.cwd}/data/raw/toxcast.csv
+  assay: ${hydra:runtime.cwd}/data/processed/assays/
+  assay_id: ${hydra:runtime.cwd}/data/processed/assay_ids/
+  feature: ${hydra:runtime.cwd}/data/processed/features/
+  model: ${hydra:runtime.cwd}/data/processed/models/
+  prediction: ${hydra:runtime.cwd}/data/processed/predictions/
+  score: ${hydra:runtime.cwd}/data/processed/scores/
+files:
+  identifier: test
+params:
+  dataset: toxcast
+  assay_size: 128
+  support_set_size: 16
+  feature: ecfp4_1024
+  model: logistic
