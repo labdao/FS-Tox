@@ -18,6 +18,7 @@ def generate_predictions(
     representation,
     model,
     dataset,
+    support_set_size,
 ):
     logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ def generate_predictions(
         _, X_test, _, y_test = mod_test_train_split(merged_df)
 
         # Get model filepath
-        trained_model_filepath = f"{model_filepath}/{assay_filename}_{model}_{representation}.pkl"
+        trained_model_filepath = f"{model_filepath}/{assay_filename}_{model}_{representation}_support_{support_set_size}.pkl"
 
         # Load the model
         with open(trained_model_filepath, "rb") as f:
@@ -73,6 +74,6 @@ def generate_predictions(
 
         # Save the predictions to a parquet file
         preds_df.to_parquet(
-            f"{prediction_filepath}/{assay_filename}_{model}_{representation}.parquet"
+            f"{prediction_filepath}/{assay_filename}_{model}_{representation}_support_{support_set_size}.parquet"
         )
     logger.info(f"predictions created for {i+1} models.")

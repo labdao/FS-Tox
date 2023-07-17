@@ -4,6 +4,7 @@ from dataclasses import dataclass
 class Paths:
     raw: str
     assay: str
+    assay_id: str
     feature: str
     model: str
     prediction: str
@@ -20,3 +21,9 @@ class Params:
     support_set_size: int
     feature: str
     model: str
+
+@dataclass
+class AssayConfig:
+    paths: Paths
+    files: Files
+    params: Params

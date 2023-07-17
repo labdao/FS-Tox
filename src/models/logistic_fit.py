@@ -15,7 +15,7 @@ from .utils import (
 
 
 def train(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset
+    representation_filepath, assay_filepath, output_filepath, representation, dataset, support_set_size
 ):
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -58,7 +58,7 @@ def train(
         log_reg.fit(X_train, y_train)
 
         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_logistic_{representation}.pkl"
+        model_path = f"{output_filepath}/{assay_filename}_logistic_{representation}_support_{support_set_size}.pkl"
 
         # Save model to a pickle file
         with open(model_path, "wb") as f:

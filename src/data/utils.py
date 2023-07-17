@@ -7,6 +7,7 @@ import os
 from rdkit import RDLogger
 import requests
 import time
+import hashlib
 
 # Suppress RDKit warnings
 RDLogger.DisableLog("rdApp.*")
@@ -164,6 +165,10 @@ def binarize_assays(df):
     df = pd.DataFrame(df, columns=assay_names, index=smiles)
 
     return df
+
+
+def get_sha256_snippet(input_string):
+    return hashlib.sha256(input_string.encode()).hexdigest()[:15]
 
 
 def assign_test_train(df_len, size_train):

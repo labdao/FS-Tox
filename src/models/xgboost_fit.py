@@ -47,7 +47,12 @@ def param_search(X_train, y_train):
 
 
 def train(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset
+    representation_filepath,
+    assay_filepath,
+    output_filepath,
+    representation,
+    dataset,
+    support_set_size,
 ):
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -112,9 +117,7 @@ def train(
         representation_str = "_".join(representation)
 
         # Create a filename for the model
-        model_path = (
-            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
-        )
+        model_path = f"{output_filepath}/{assay_filename}_xgboost_{representation_str}_support_{support_set_size}.pkl"
 
         # Save model to a pickle file
         with open(model_path, "wb") as f:

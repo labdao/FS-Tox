@@ -1,6 +1,7 @@
 import logging
 
 import hydra
+from config import AssayConfig
 
 from data.raw_to_assays import make_assays
 from features import chemberta, chemgpt, ecfp4
@@ -9,8 +10,8 @@ from models.predict import generate_predictions
 from models.evaluate import evaluate_predictions
 
 
-@hydra.main(config_path="conf", config_name="config")
-def main(cfg):
+@hydra.main(version_base=None, config_path="conf", config_name="config")
+def main(cfg: AssayConfig) -> None:
     """
     Generates assay data from the raw dataset.
 
@@ -52,6 +53,7 @@ def main(cfg):
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
+            cfg.params.support_set_size,
         )
     elif cfg.params.model == "xgboost":
         xgboost_fit.train(
@@ -60,6 +62,7 @@ def main(cfg):
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
+            cfg.params.support_set_size,
         )
 
     # Make predictions
@@ -71,6 +74,7 @@ def main(cfg):
         cfg.params.feature,
         cfg.params.model,
         cfg.params.dataset,
+        cfg.params.support_set_size,
     )
 
     # Evaluate predictions

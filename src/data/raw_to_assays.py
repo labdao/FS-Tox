@@ -16,6 +16,7 @@ from .utils import (
     binarize_assays,
     filter_by_range,
     drug_name_to_smiles,
+    get_sha256_snippet
 )
 
 
@@ -222,7 +223,7 @@ def process_prism(input_filepath):
     return df
 
 
-def convert_to_parquets(df, source_id, output_filepath, support_set_size):
+def convert_to_parquets(df, source_id, output_filepath, support_set_size, assay_identifiers):
     """
     Converts an unprocessed DataFrame to individual parquet files for each assay.
 
@@ -243,7 +244,7 @@ def convert_to_parquets(df, source_id, output_filepath, support_set_size):
     assay_names = [col for col in df.columns if col != "canonical_smiles"]
 
     # Loop through each assay
-    for assay_name in assay_names:
+    for i, assay_name in enumerate(assay_names):
         # Get dataframe with assay and smiles columns
         assay_df = df[["canonical_smiles", assay_name]].copy()
 
@@ -265,6 +266,9 @@ def convert_to_parquets(df, source_id, output_filepath, support_set_size):
 
         # Add source_id column
         assay_df["source_id"] = source_id
+
+        # Add assay identifier column
+        assay_df["assay_identifier"] = assay_identifiers[i]
 
         # Write each assay to a parquet file
         assay_df.to_parquet(f"{output_filepath}/{assay_name}_{source_id}.parquet")
@@ -301,7 +305,6 @@ def make_assays(
     # Remove columns not in active ratio range
     df = filter_by_active_ratio(df)
 
-
     # Convert smiles to canonical_smiles
     df = smiles_to_canonical_smiles(df)
 
@@ -311,9 +314,12 @@ def make_assays(
     # Get assay names
     assay_names = [col for col in df.columns if col != "canonical_smiles"]
 
+    # Create assay_identifiers using hash of column name
+    assay_identifiers = [get_sha256_snippet(col) for col in df.columns if col != "canonical_smiles"]
+    
     # Convert the list of column names to a lookup DataFrame
     lookup_df = pd.DataFrame(
-        {"assay_name": assay_names, "assay_id": range(len(assay_names))}
+        {"assay_name": assay_names, "assay_id": assay_identifiers}
     )
 
     # Save lookup_df
@@ -324,6 +330,7 @@ def make_assays(
         index=False,
     )
 
+
     # Convert column names to standard identifiers
     df.columns = [
         f"assay_{i}" if col != "canonical_smiles" else col
@@ -331,6 +338,6 @@ def make_assays(
     ]
 
     # Convert the assay DataFrame to individual parquet files
-    convert_to_parquets(df, dataset, output_filepath, support_set_size)
+    convert_to_parquets(df, dataset, output_filepath, support_set_size, assay_identifiers)
 
     logger.info("created %d individual assay parquet files.", df.shape[1] - 1)
