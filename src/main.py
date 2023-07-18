@@ -1,13 +1,14 @@
 import logging
+import os
 
 import hydra
-from config import AssayConfig
 
+from config import AssayConfig
 from data.raw_to_assays import make_assays
 from features import chemberta, chemgpt, ecfp4
 from models import logistic_fit, xgboost_fit
-from models.predict import generate_predictions
 from models.evaluate import evaluate_predictions
+from models.predict import generate_predictions
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
@@ -24,6 +25,15 @@ def main(cfg: AssayConfig) -> None:
         support_set_size (int): The size of the support set for each assay.
     """
 
+    # Create pipeline directories in the outputs directory
+    for _, value in cfg.paths.items():
+        # Handles case where value is raw dataset path
+        try:
+            os.makedirs(value, exist_ok=True)
+        except FileExistsError:
+            continue
+
+    
     # Create assay parquet files
     make_assays(
         cfg.paths.raw,

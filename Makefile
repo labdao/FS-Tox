@@ -36,6 +36,8 @@ clean:
 	find . -type f -name "*parquet" -delete
 	find . -type f -name "*pkl" -delete
 	find . -type f -name "*_lookup.csv" -delete
+	rm -rf ./outputs
+	rm -rf ./multirun
 
 ## Lint using flake8
 lint:

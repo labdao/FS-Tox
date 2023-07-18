@@ -1,19 +1,15 @@
+import logging
+import os
+import pickle
+import statistics
+
+import click
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
-import statistics
-import pickle
 
-import os
-import logging
-import click
-
-from .utils import (
-    load_assays,
-    load_representations,
-    construct_query,
-    mod_test_train_split,
-)
+from .utils import (construct_query, load_assays, load_representations,
+                    mod_test_train_split)
 
 
 def param_search(X_train, y_train):

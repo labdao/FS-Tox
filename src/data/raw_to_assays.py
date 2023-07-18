@@ -1,28 +1,20 @@
-import os
-import click
-import pandas as pd
-from rdkit import Chem
-from rdkit import RDLogger
-import numpy as np
 import logging
+import os
 
+import click
+import numpy as np
+import pandas as pd
+from rdkit import Chem, RDLogger
 
-from .utils import (
-    filter_by_active_ratio,
-    inchi_to_smiles,
-    smiles_to_canonical_smiles,
-    assign_test_train,
-    pivot_assays,
-    binarize_assays,
-    filter_by_range,
-    drug_name_to_smiles,
-    get_sha256_snippet
-)
+from .utils import (assign_test_train, binarize_assays, drug_name_to_smiles,
+                    filter_by_active_ratio, filter_by_range,
+                    get_sha256_snippet, inchi_to_smiles, pivot_assays,
+                    smiles_to_canonical_smiles)
 
 
 def process_tox21(input_filepath):
     """Process the tox21 dataset."""
-    df = pd.read_csv(input_filepath)
+    df = pd.read_csv(f"{input_filepath}/tox21.csv")
 
     # Drop the mol_id column
     df.drop(columns="mol_id", inplace=True)
@@ -32,22 +24,21 @@ def process_tox21(input_filepath):
 
 def process_clintox(input_filepath):
     """Process the clintox dataset."""
-    df = pd.read_csv(input_filepath)
+     df = pd.read_csv(f"{input_filepath}/clintox.csv")
 
     return df
 
 
 def process_toxcast(input_filepath):
     """Process the toxcast dataset."""
-    df = pd.read_csv(input_filepath)
+     df = pd.read_csv(f"{input_filepath}/toxcast.csv")
 
     return df
 
 
 def process_bbbp(input_filepath):
     """Process the bbbp dataset."""
-
-    df = pd.read_csv(input_filepath)
+    df = pd.read_csv(f"{input_filepath}/bbbp.csv")
 
     # Remove molecule name and num column
     df.drop(columns=["num", "name"], inplace=True)
@@ -77,7 +68,7 @@ def process_toxval(input_filepath, identifier):
     ]
 
     df = pd.read_csv(
-        input_filepath,
+        f"{input_filepath}/toxval.csv",
         usecols=identifiers + [outcome] + assay_components + [additional_cols],
     )
 
@@ -134,7 +125,7 @@ def process_toxval(input_filepath, identifier):
 
 
 def process_nci60(input_filepath, identifier_filepath, group_size=32):
-    df = pd.read_csv(input_filepath)
+    df = pd.read_csv(f"{input_filepath}/nci60.csv")
 
     # Define assay components columns
     assay_components = ["PANEL_NAME", "CELL_NAME", "CONCENTRATION_UNIT", "EXPID"]
@@ -170,7 +161,7 @@ def process_nci60(input_filepath, identifier_filepath, group_size=32):
 
 
 def process_cancerrx(input_filepath):
-    df = pd.read_excel(input_filepath)
+    df = pd.read_excel(f"{input_filepath}/cancerrx.xlsx")
 
     # Change "SMILES" column name to "smiles"
     df.rename(columns={"SMILES": "smiles"}, inplace=True)
@@ -200,7 +191,7 @@ def process_cancerrx(input_filepath):
 
 
 def process_prism(input_filepath):
-    df = pd.read_csv(input_filepath, dtype={14: str, 15: str})
+    df = pd.read_csv(f"{input_filepath}/prism.csv", dtype={14: str, 15: str})
 
     # Set the assay components
     assay_components = ["ccle_name"]

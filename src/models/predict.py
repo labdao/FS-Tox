@@ -1,14 +1,12 @@
 import logging
 import pickle
+
 import duckdb
 import pandas as pd
 
-from .utils import (
-    load_assays,
-    load_representations,
-    construct_query,
-    mod_test_train_split,
-)
+from .utils import (construct_query, load_assays, load_representations,
+                    mod_test_train_split)
+
 
 def generate_predictions(
     model_filepath,

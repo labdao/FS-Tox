@@ -1,6 +1,7 @@
-import pandas as pd
-import duckdb
 import os
+
+import duckdb
+import pandas as pd
 
 
 def construct_query(input_filepath, representation):

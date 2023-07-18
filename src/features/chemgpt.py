@@ -1,11 +1,13 @@
 import torch
 import transformers
+
 transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
 
 import logging
-import pandas as pd
+
 import click
 import duckdb
+import pandas as pd
 
 
 def chemgpt_encode(smiles):

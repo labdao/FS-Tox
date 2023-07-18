@@ -1,10 +1,11 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import duckdb
-import click
 import logging
+
+import click
+import duckdb
+import matplotlib.pyplot as plt
 import neptune
+import pandas as pd
+import seaborn as sns
 
 run = neptune.init_run()
 

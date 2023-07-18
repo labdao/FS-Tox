@@ -1,13 +1,11 @@
-from rdkit import RDLogger
-from rdkit import Chem
-
-import pandas as pd
-import numpy as np
-import os
-from rdkit import RDLogger
-import requests
-import time
 import hashlib
+import os
+import time
+
+import numpy as np
+import pandas as pd
+import requests
+from rdkit import Chem, RDLogger
 
 # Suppress RDKit warnings
 RDLogger.DisableLog("rdApp.*")

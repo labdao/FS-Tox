@@ -1,9 +1,10 @@
-import click
 import logging
 import os
-import pandas as pd
-from sklearn.metrics import roc_curve, auc
+
+import click
 import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.metrics import auc, roc_curve
 
 
 @click.command()

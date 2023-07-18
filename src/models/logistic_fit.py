@@ -1,17 +1,14 @@
 import logging
 import os
+import pickle
+
 import click
 import duckdb
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-import pickle
 
-from .utils import (
-    construct_query,
-    mod_test_train_split,
-    load_representations,
-    load_assays,
-)
+from .utils import (construct_query, load_assays, load_representations,
+                    mod_test_train_split)
 
 
 def train(
