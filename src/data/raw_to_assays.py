@@ -24,14 +24,14 @@ def process_tox21(input_filepath):
 
 def process_clintox(input_filepath):
     """Process the clintox dataset."""
-     df = pd.read_csv(f"{input_filepath}/clintox.csv")
+    df = pd.read_csv(f"{input_filepath}/clintox.csv")
 
     return df
 
 
 def process_toxcast(input_filepath):
     """Process the toxcast dataset."""
-     df = pd.read_csv(f"{input_filepath}/toxcast.csv")
+    df = pd.read_csv(f"{input_filepath}/toxcast.csv")
 
     return df
 
