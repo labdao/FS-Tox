@@ -13,6 +13,7 @@ from models.predict import generate_predictions
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: AssayConfig) -> None:
+    print(cfg.paths.assay)
     """
     Generates assay data from the raw dataset.
 

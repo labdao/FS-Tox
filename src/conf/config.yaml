@@ -1,18 +1,22 @@
 paths:
   raw: ${hydra:runtime.cwd}/data/raw/
-  assay: ${hydra:run.dir}/${hydra:job.override_dirname}/data/processed/assay/
-  assay_id: ${hydra:run.dir}/${hydra:job.override_dirname}/data/processed/assay_id/
-  feature: ${hydra:run.dir}/${hydra:job.override_dirname}/data/processed/feature/
-  model: ${hydra:run.dir}/${hydra:job.override_dirname}/data/processed/model/
-  prediction: ${hydra:run.dir}/${hydra:params.support_set_size}/data/processed/prediction/
-  score: ${hydra:run.dir}/${hydra:job.override_dirname}/data/processed/score/
+  assay: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay/
+  assay_id: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay_id/
+  feature: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/feature/
+  model: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/model/
+  prediction: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/prediction/
+  score: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/score/
 
 files:
   identifier: test
   
 params:
-  dataset: toxval
+  dataset: nci60
   assay_size: 128
   support_set_size: 32
   feature: ecfp4_1024
   model: logistic
+
+hydra:
+  sweep:
+    subdir: ${hydra.job.override_dirname}

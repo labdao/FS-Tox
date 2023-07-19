@@ -124,14 +124,14 @@ def process_toxval(input_filepath, identifier):
     return df
 
 
-def process_nci60(input_filepath, identifier_filepath, group_size=32):
+def process_nci60(input_filepath, identifier_filepath, assay_size):
     df = pd.read_csv(f"{input_filepath}/nci60.csv")
 
     # Define assay components columns
-    assay_components = ["PANEL_NAME", "CELL_NAME", "CONCENTRATION_UNIT", "EXPID"]
+    assay_components = ["CELL_NAME", "CONCENTRATION_UNIT"]
 
     # Remove AVERAGE values greater than -3.5
-    df = df[df["AVERAGE"] < 3.5]
+    df = df[df["AVERAGE"] < -3.5]
 
     # Read in the identifiers
     identifier_col_names = ["nsc", "casrn", "smiles"]
@@ -143,7 +143,7 @@ def process_nci60(input_filepath, identifier_filepath, group_size=32):
     df = pd.merge(df, identifiers, left_on="NSC", right_on="nsc", how="inner")
 
     # Remove records that belong to a group of fewer than specified size
-    df = df.groupby(assay_components).filter(lambda x: len(x) >= group_size)
+    df = df.groupby(assay_components).filter(lambda x: len(x) >= assay_size)
 
     # Pivot the DataFrame so that each column is a unique assay
     df = pivot_assays(df, assay_components, "AVERAGE")
@@ -283,7 +283,7 @@ def make_assays(
     elif dataset == "toxval":
         df = process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
     elif dataset == "nci60":
-        df = process_nci60(input_filepath, "data/external/nci60_identifiers.txt")
+        df = process_nci60(input_filepath, "data/external/nci60_identifiers.txt", assay_size)
     elif dataset == "cancerrx":
         df = process_cancerrx(input_filepath)
     elif dataset == "prism":
