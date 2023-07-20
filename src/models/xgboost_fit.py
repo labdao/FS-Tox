@@ -68,7 +68,7 @@ def train(
     best_params_list = []
 
     # Evaluate each assay
-    for i, (assay_df, assay_filename) in enumerate(assay_dfs):
+    for i, (assay_df, assay_id) in enumerate(assay_dfs):
         # Merge the representations and assays
         merged_df = pd.merge(
             representation_df, assay_df, on="canonical_smiles", how="inner"
@@ -78,7 +78,7 @@ def train(
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
         if i < 5:
-            logger.info(f"conducting hyperparameter search for assay {i}...")
+            logger.info("conducting hyperparameter search for assay %d...", assay_id)
 
             # Conduct hyperparameter search
             best_params = param_search(X_train, y_train)
@@ -109,11 +109,8 @@ def train(
         model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
         model.fit(X_train, y_train)
 
-        # Convert the representations tuple into a string with elements separated by '_'
-        representation_str = "_".join(representation)
-
         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_xgboost_{representation_str}_support_{support_set_size}.pkl"
+        model_path = f"{output_filepath}/{assay_id}.pkl"
 
         # Save model to a pickle file
         with open(model_path, "wb") as f:

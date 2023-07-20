@@ -13,7 +13,6 @@ from models.predict import generate_predictions
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: AssayConfig) -> None:
-    print(cfg.paths.assay)
     """
     Generates assay data from the raw dataset.
 
@@ -44,6 +43,7 @@ def main(cfg: AssayConfig) -> None:
         cfg.files.identifier,
         cfg.params.assay_size,
         cfg.params.support_set_size,
+        cfg.params.test_prob,
     )
 
     # Generate features
@@ -64,7 +64,6 @@ def main(cfg: AssayConfig) -> None:
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
-            cfg.params.support_set_size,
         )
     elif cfg.params.model == "xgboost":
         xgboost_fit.train(
@@ -83,9 +82,7 @@ def main(cfg: AssayConfig) -> None:
         cfg.paths.feature,
         cfg.paths.prediction,
         cfg.params.feature,
-        cfg.params.model,
         cfg.params.dataset,
-        cfg.params.support_set_size,
     )
 
     # Evaluate predictions
@@ -93,8 +90,6 @@ def main(cfg: AssayConfig) -> None:
         cfg.paths.prediction,
         cfg.paths.score,
         cfg.paths.assay,
-        cfg.params.dataset,
-        cfg.params.support_set_size,
     )
 
 

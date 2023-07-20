@@ -1,7 +1,6 @@
 import logging
 import pickle
 
-import duckdb
 import pandas as pd
 
 from .utils import (construct_query, load_assays, load_representations,
@@ -14,9 +13,7 @@ def generate_predictions(
     feature_filepath,
     prediction_filepath,
     representation,
-    model,
     dataset,
-    support_set_size,
 ):
     logger = logging.getLogger(__name__)
 
@@ -31,7 +28,7 @@ def generate_predictions(
 
     logger.info("creating predictions for %s...", dataset)
     # Evaluate each assay
-    for i, (assay_df, assay_filename) in enumerate(assay_dfs):
+    for i, (assay_df, assay_id) in enumerate(assay_dfs):
 
         # Merge the representations and assays
         merged_df = pd.merge(
@@ -42,7 +39,7 @@ def generate_predictions(
         _, X_test, _, y_test = mod_test_train_split(merged_df)
 
         # Get model filepath
-        trained_model_filepath = f"{model_filepath}/{assay_filename}_{model}_{representation}_support_{support_set_size}.pkl"
+        trained_model_filepath = f"{model_filepath}/{assay_id}.pkl"
 
         # Load the model
         with open(trained_model_filepath, "rb") as f:
@@ -65,13 +62,12 @@ def generate_predictions(
                 "canonical_smiles": test_canonical_smiles,
                 "preds": preds,
                 "preds_proba": preds_proba,
-                "ground_truth": y_test,
-                "model": model,
+                "ground_truth": y_test
             }
         )
 
         # Save the predictions to a parquet file
         preds_df.to_parquet(
-            f"{prediction_filepath}/{assay_filename}_{model}_{representation}_support_{support_set_size}.parquet"
+            f"{prediction_filepath}/{assay_id}.parquet"
         )
-    logger.info(f"predictions created for {i+1} models.")
+    logger.info("predictions created for %d models.", i+1)

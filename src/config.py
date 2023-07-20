@@ -22,6 +22,7 @@ class Params:
     support_set_size: int
     feature: str
     model: str
+    test_prob: float
 
 @dataclass
 class AssayConfig:

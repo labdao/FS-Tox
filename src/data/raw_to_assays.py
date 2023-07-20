@@ -6,10 +6,17 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem, RDLogger
 
-from .utils import (assign_test_train, binarize_assays, drug_name_to_smiles,
-                    filter_by_active_ratio, filter_by_range,
-                    get_sha256_snippet, inchi_to_smiles, pivot_assays,
-                    smiles_to_canonical_smiles)
+from .utils import (
+    assign_test_train,
+    binarize_assays,
+    drug_name_to_smiles,
+    filter_by_active_ratio,
+    filter_by_range,
+    get_sha256_snippet,
+    inchi_to_smiles,
+    pivot_assays,
+    smiles_to_canonical_smiles,
+)
 
 
 def process_tox21(input_filepath):
@@ -214,7 +221,9 @@ def process_prism(input_filepath):
     return df
 
 
-def convert_to_parquets(df, source_id, output_filepath, support_set_size, assay_identifiers):
+def convert_to_parquets(
+    df, source_id, output_filepath, support_set_size, test_prob
+):
     """
     Converts an unprocessed DataFrame to individual parquet files for each assay.
 
@@ -232,41 +241,45 @@ def convert_to_parquets(df, source_id, output_filepath, support_set_size, assay_
     # Suppress RDKit warnings
     RDLogger.DisableLog("rdApp.*")
 
-    assay_names = [col for col in df.columns if col != "canonical_smiles"]
+    assay_ids = [col for col in df.columns if col != "canonical_smiles"]
 
     # Loop through each assay
-    for i, assay_name in enumerate(assay_names):
+    for i, assay_id in enumerate(assay_ids):
         # Get dataframe with assay and smiles columns
-        assay_df = df[["canonical_smiles", assay_name]].copy()
+        assay_df = df[["canonical_smiles", assay_id]].copy()
 
         # Filter out rows with null values for the assay
-        assay_df.dropna(subset=[assay_name], inplace=True)
+        assay_df.dropna(subset=[assay_id], inplace=True)
         assay_df.reset_index(drop=True, inplace=True)
 
         # Randomly assign each row to train or test
         assay_df["support_query"] = assign_test_train(len(assay_df), support_set_size)
 
         # Rename assay column label to 'ground_truth'
-        assay_df.rename(columns={assay_name: "ground_truth"}, inplace=True)
+        assay_df.rename(columns={assay_id: "ground_truth"}, inplace=True)
 
         # Convert ground_truth column to int from float
         assay_df["ground_truth"] = assay_df["ground_truth"].astype(int)
 
         # Create a column for the assay name
-        assay_df["assay_id"] = assay_name
+        assay_df["assay_id"] = assay_id
 
         # Add source_id column
         assay_df["source_id"] = source_id
 
-        # Add assay identifier column
-        assay_df["assay_identifier"] = assay_identifiers[i]
-
         # Write each assay to a parquet file
-        assay_df.to_parquet(f"{output_filepath}/{assay_name}_{source_id}.parquet")
+        assay_df.to_parquet(f"{output_filepath}/{assay_id}.parquet")
 
 
 def make_assays(
-    input_filepath, output_filepath, assay_id_path, dataset, identifier, assay_size, support_set_size
+    input_filepath,
+    output_filepath,
+    assay_id_path,
+    dataset,
+    identifier,
+    assay_size,
+    support_set_size,
+    test_prob,
 ):
     logger = logging.getLogger(__name__)
     logger.info("converting %s raw data to individual assay parquet files...", dataset)
@@ -283,7 +296,9 @@ def make_assays(
     elif dataset == "toxval":
         df = process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
     elif dataset == "nci60":
-        df = process_nci60(input_filepath, "data/external/nci60_identifiers.txt", assay_size)
+        df = process_nci60(
+            input_filepath, "data/external/nci60_identifiers.txt", assay_size
+        )
     elif dataset == "cancerrx":
         df = process_cancerrx(input_filepath)
     elif dataset == "prism":
@@ -303,32 +318,28 @@ def make_assays(
     df = df.loc[:, (df.count() >= assay_size).values]
 
     # Get assay names
-    assay_names = [col for col in df.columns if col != "canonical_smiles"]
+    assay_components = [col for col in df.columns if col != "canonical_smiles"]
 
     # Create assay_identifiers using hash of column name
-    assay_identifiers = [get_sha256_snippet(col) for col in df.columns if col != "canonical_smiles"]
-    
+    assay_ids = [
+        get_sha256_snippet(col) for col in df.columns if col != "canonical_smiles"
+    ]
+
     # Convert the list of column names to a lookup DataFrame
-    lookup_df = pd.DataFrame(
-        {"assay_name": assay_names, "assay_id": assay_identifiers}
-    )
+    lookup_df = pd.DataFrame({"assay_name": assay_components, "assay_id": assay_ids})
 
     # Save lookup_df
     lookup_df.to_parquet(
-        os.path.join(
-            f"{assay_id_path}/{dataset}_lookup_assay-size-{assay_size}_support-size-{support_set_size}.parquet"
-        ),
+        os.path.join(f"{assay_id_path}/{dataset}.parquet"),
         index=False,
     )
 
-
     # Convert column names to standard identifiers
-    df.columns = [
-        f"assay_{i}" if col != "canonical_smiles" else col
-        for i, col in enumerate(df.columns)
-    ]
+    df.columns = [get_sha256_snippet(col) if col != "canonical_smiles" else col for col in df.columns]
 
     # Convert the assay DataFrame to individual parquet files
-    convert_to_parquets(df, dataset, output_filepath, support_set_size, assay_identifiers)
+    convert_to_parquets(
+        df, dataset, output_filepath, support_set_size, test_prob
+    )
 
     logger.info("created %d individual assay parquet files.", df.shape[1] - 1)

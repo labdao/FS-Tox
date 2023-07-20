@@ -11,11 +11,12 @@ files:
   identifier: test
   
 params:
-  dataset: nci60
+  dataset: toxcast
   assay_size: 128
   support_set_size: 32
   feature: ecfp4_1024
   model: logistic
+  test_prob: 0.05
 
 hydra:
   sweep:

@@ -12,7 +12,7 @@ from .utils import (construct_query, load_assays, load_representations,
 
 
 def train(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset, support_set_size
+    representation_filepath, assay_filepath, output_filepath, representation, dataset
 ):
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -32,7 +32,8 @@ def train(
     logger.info("fitting models to assay data...")
 
     # Evaluate each assay
-    for i, (assay_df, assay_filename) in enumerate(assay_dfs):
+    for i, (assay_df, assay_id) in enumerate(assay_dfs):
+
         # Merge the representations and assays
         merged_df = pd.merge(
             representation_df, assay_df, on="canonical_smiles", how="inner"
@@ -43,7 +44,7 @@ def train(
 
         # Check if y_train has more than one unique class
         if len(pd.unique(y_train)) < 2:
-            logger.info("Skipping model training for %s due to lack of classes.", assay_filename)
+            logger.info("Skipping model training for %s due to lack of classes.", assay_id)
             continue
 
 
@@ -55,7 +56,7 @@ def train(
         log_reg.fit(X_train, y_train)
 
         # Create a filename for the model
-        model_path = f"{output_filepath}/{assay_filename}_logistic_{representation}_support_{support_set_size}.pkl"
+        model_path = f"{output_filepath}/{assay_id}.pkl"
 
         # Save model to a pickle file
         with open(model_path, "wb") as f:
