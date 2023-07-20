@@ -1,6 +1,7 @@
-import pandas as pd
-import duckdb
 import os
+
+import duckdb
+import pandas as pd
 
 
 def construct_query(input_filepath, representation):
@@ -28,8 +29,8 @@ def load_assays(input_filepath, dataset):
     for filename in filenames:
         df = pd.read_parquet(filename)
 
-        # Drop the source_id and selfies columns
-        df.drop(["source_id", "selfies"], axis=1, inplace=True)
+        # Drop the source_id column
+        df.drop("source_id", axis=1, inplace=True)
 
         # Get file basename
         assay_basename = os.path.basename(filename)
@@ -70,10 +71,10 @@ def mod_test_train_split(merged_df):
     y_train = merged_df.loc[merged_df["support_query"] == 0, "ground_truth"]
     y_test = merged_df.loc[merged_df["support_query"] == 1, "ground_truth"]
     X_train = merged_df.loc[merged_df["support_query"] == 0].drop(
-        ["canonical_smiles", "ground_truth", "support_query", "assay_id"], axis=1
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id"], axis=1
     )
     X_test = merged_df.loc[merged_df["support_query"] == 1].drop(
-        ["canonical_smiles", "ground_truth", "support_query", "assay_id"], axis=1
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id"], axis=1
     )
 
     return X_train, X_test, y_train, y_test

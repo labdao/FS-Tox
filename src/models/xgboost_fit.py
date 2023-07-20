@@ -1,19 +1,15 @@
+import logging
+import os
+import pickle
+import statistics
+
+import click
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
-import statistics
-import pickle
 
-import os
-import logging
-import click
-
-from utils import (
-    load_assays,
-    load_representations,
-    construct_query,
-    mod_test_train_split,
-)
+from .utils import (construct_query, load_assays, load_representations,
+                    mod_test_train_split)
 
 
 def param_search(X_train, y_train):
@@ -47,7 +43,12 @@ def param_search(X_train, y_train):
 
 
 def train(
-    representation_filepath, assay_filepath, output_filepath, representation, dataset
+    representation_filepath,
+    assay_filepath,
+    output_filepath,
+    representation,
+    dataset,
+    support_set_size,
 ):
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -67,7 +68,7 @@ def train(
     best_params_list = []
 
     # Evaluate each assay
-    for i, (assay_df, assay_filename) in enumerate(assay_dfs):
+    for i, (assay_df, assay_id) in enumerate(assay_dfs):
         # Merge the representations and assays
         merged_df = pd.merge(
             representation_df, assay_df, on="canonical_smiles", how="inner"
@@ -77,7 +78,7 @@ def train(
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
         if i < 5:
-            logger.info(f"conducting hyperparameter search for assay {i+1}...")
+            logger.info("conducting hyperparameter search for assay %d...", assay_id)
 
             # Conduct hyperparameter search
             best_params = param_search(X_train, y_train)
@@ -108,13 +109,8 @@ def train(
         model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
         model.fit(X_train, y_train)
 
-        # Convert the representations tuple into a string with elements separated by '_'
-        representation_str = "_".join(representation)
-
         # Create a filename for the model
-        model_path = (
-            f"{output_filepath}/{assay_filename}_xgboost_{representation_str}.pkl"
-        )
+        model_path = f"{output_filepath}/{assay_id}.pkl"
 
         # Save model to a pickle file
         with open(model_path, "wb") as f:

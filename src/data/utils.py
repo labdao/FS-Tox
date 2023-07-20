@@ -1,14 +1,92 @@
-from rdkit import RDLogger
-from rdkit import Chem
-
-import pandas as pd
-import numpy as np
-import selfies as sf
+import hashlib
 import os
-from rdkit import RDLogger
+import time
+
+import numpy as np
+import pandas as pd
+import requests
+from rdkit import Chem, RDLogger
 
 # Suppress RDKit warnings
 RDLogger.DisableLog("rdApp.*")
+
+def drug_name_to_smiles(df):
+
+    base_url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+    
+    smiles_dict = {}
+
+    # Get the drug names from drug name col
+    drug_names = df["DRUG_NAME"].unique()  
+
+    for drug_name in drug_names:
+        url = f"{base_url}/compound/name/{drug_name}/property/IsomericSMILES/JSON"
+
+        # Make a request to the PubChem API
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+        # If an HTTP error occurs (e.g., 404, 500):
+        except requests.HTTPError as http_err:
+            continue
+        # If a connection error occurs (e.g., DNS failure, refused connection, etc):
+        except Exception as err:
+            continue
+        
+        smiles = response.json()['PropertyTable']['Properties'][0]['IsomericSMILES']
+        if smiles is not None:
+            smiles_dict[drug_name] = smiles
+        
+        # Wait for 0.2 before sending another request
+        time.sleep(0.2)
+
+    # Add the smiles values as a new column
+    df['smiles'] = df['DRUG_NAME'].map(smiles_dict)
+
+    # Remove rows where 'SMILES' is NaN
+    df = df.dropna(subset=['smiles'])
+
+    return df
+    
+
+def filter_by_range(df: pd.DataFrame):
+    # Get absolute value of the difference between the max and min of each column
+    abs_diff = (df.max() - df.min()).abs()
+
+    # Keep assays where the order of magnitude range is greater than 2
+    df = df.loc[:, (abs_diff > 2).values]
+
+    return df
+
+
+def filter_by_active_ratio(df: pd.DataFrame):
+    # Temporarily remove the smiles column
+    smiles = df.pop("smiles")
+
+    # Remove columns with no inactive compounds
+    df = df.loc[:, (df != 1).any(axis=0)]
+
+    # Sum the number of active compounds in a column
+    active_compounds = df.sum()
+
+    # Sum the number of inactive compounds in a column
+    inactive_compounds = (df == 0).sum()
+
+    # Calculate the ratio of active to inactive compounds
+    active_ratio = active_compounds / inactive_compounds
+
+    # Remove columns with active ratio greater than 2.333 or less than 0.43
+    active_ratio_mask = (active_ratio < 2.333) & (active_ratio > 0.43)
+    df = df.loc[:, active_ratio_mask]
+
+    # Add the smiles column back
+    df["smiles"] = smiles
+
+    # If there are no columns in the active ratio range, raise an exception
+    if len(df.columns) == 1 and "smiles" in df.columns:
+        raise ValueError("No assays have active proportions between 0.3 and 0.7.")
+
+    return df
 
 
 def smiles_to_canonical_smiles(df):
@@ -21,63 +99,32 @@ def smiles_to_canonical_smiles(df):
     # Drop the smiles column
     df.drop("smiles", axis=1, inplace=True)
 
+    # Remove rows with null canonical smiles
+    df.dropna(subset=["canonical_smiles"], inplace=True)
+
     return df
 
 
-def binarize_df(df):
-    # Calculate the median of each column, while ignoring NaNs
-    medians = df.median()
-
-    # Subtract the medians from the DataFrame (broadcasted along columns)
-    diff = df.subtract(medians)
-
-    # Values less than or equal to 0 become 0, and greater than 0 become 1. NaNs remain NaNs.
-    binarized_df = np.where(diff >= 0, 1, np.where(diff < 0, 0, np.nan))
-
-    # Convert back to DataFrame
-    binarized_df = pd.DataFrame(binarized_df, columns=df.columns, index=df.index)
-
-    # Count 1s and 0s in each column
-    count_1s = (binarized_df == 1).sum()
-    count_0s = (binarized_df == 0).sum()
-
-    # Compute the proportion
-    proportion = count_1s / count_0s
-
-    # Identify columns to drop
-    columns_to_drop = proportion[(proportion > 2.333) | (proportion < 0.43)].index
-
-    # Drop the columns
-    binarized_df.drop(columns_to_drop, axis=1, inplace=True)
-
-    return binarized_df
-
-
-def selfies_encoder(smiles):
-    """
-    Encodes a SMILES string using the selfies library, handling any exceptions that may occur.
-    Parameters:
-    smiles (str): The SMILES string to encode.
-
-    Returns:
-    str or None: The encoded SELFIES string, or None if an exception occurred during encoding.
-    """
-    try:
-        return sf.encoder(smiles)
-    except Exception as e:
-        return None
-
-
 # Define a function to convert InChI to SMILES
-def inchi_to_smiles(inchi):
+def inchi_to_smiles(df: pd.DataFrame) -> pd.DataFrame:
     # Suppress RDKit warnings
     RDLogger.DisableLog("rdApp.*")
 
-    mol = Chem.MolFromInchi(inchi)
-    if mol is None:
-        return "InvalidInChI"  # Placeholder for invalid InChI
-    smiles = Chem.MolToSmiles(mol)
-    return smiles
+    # Convert InChI to SMILES
+    mol_objects = df["inchi"].astype(str).apply(Chem.MolFromInchi)
+    df["smiles"] = mol_objects.apply(
+        lambda x: Chem.MolToSmiles(x) if x is not None else None
+    )
+
+    # Drop the inchi column
+    df.drop("inchi", axis=1, inplace=True)
+
+    # Remove rows with null canonical smiles
+    df.dropna(subset=["smiles"], inplace=True)
+
+    return df
+
+
 
 
 def pivot_assays(df, assay_components, outcome_col_name):
@@ -93,51 +140,42 @@ def pivot_assays(df, assay_components, outcome_col_name):
         aggfunc=np.mean,
     )
 
-    # Get records where the order of magnitude range of the assay outcomes is greater than 2
-    df = df.loc[:, (df.max() - df.min() > 2).values]
-
-    # Apply the function to each column
-    df = binarize_df(df)
-
-    # Remove columns that have fewer than 24 members
-    df = df.dropna(thresh=24, axis=1)
-
-    # Convert smiles index to column
-    df = df.reset_index()
-
-    # Remove all columns where the value is identical for all non-null rows
-    df = df.loc[:, df.nunique() != 1]
-
-    # Get the unique assay names
-    assay_names = pd.DataFrame(df.columns[1:], columns=["combined"])
-
-    # Create a lookup table for the assay names if assay components is greater than 1
-    lookup_df = assay_names["combined"].str.split("_", expand=True) if len(assay_components) > 1 else assay_names
-
-    # Name the new columns
-    lookup_df.columns = assay_components
-
-    # Get the number of small molecules in each assay
-    lookup_df["assay_size"] = df.iloc[:, 1:].count().reset_index(drop=True)
-
-    # Assign assay to test with 0.5 probability if it has greater than 128 members     
-    lookup_df["test_train"] = lookup_df["assay_size"].apply(lambda x: np.random.choice([0, 1], p=[0.5, 0.5]) if x > 128 else 0)
-
-    # Simplify the column names
-    df.columns = [
-        f"assay_{i}" if col != "smiles" else col
-        for i, col in enumerate(df.columns)
-    ]
-
-    return df, lookup_df
+    return df
 
 
-def assign_test_train(df_len, proportions=[0.5, 0.5]):
+def binarize_assays(df):
+    # Get column names of the assays
+    assay_names = df.columns
+
+    # Get the smiles from the index
+    smiles = df.index
+
+    # Calculate the median of each column
+    medians = df.median()
+
+    # Subtract the medians from the DataFrame (broadcasted along columns)
+    diff = df.subtract(medians)
+
+    # Values less than or equal to 0 become 0, and greater than 0 become 1. NaNs remain NaNs.
+    df = np.where(diff >= 0, 1, np.where(diff < 0, 0, np.nan))
+
+    # Convert back to DataFrame from numpy array
+    df = pd.DataFrame(df, columns=assay_names, index=smiles)
+
+    return df
+
+
+def get_sha256_snippet(input_string):
+    return hashlib.sha256(input_string.encode()).hexdigest()[:15]
+
+
+def assign_test_train(df_len, size_train):
     """
     Creates a pandas Series with random assignment of each row to test or train.
 
     Parameters:
     df_len (int): The length of the DataFrame to create the test-train split for.
+    size_train (int): The size of the train set.
 
     Returns:
     pd.Series: A pandas Series with random assignment of each row to test (0) or train (1).
@@ -146,7 +184,13 @@ def assign_test_train(df_len, proportions=[0.5, 0.5]):
     # Set seed for reproducibility
     np.random.seed(42)
 
-    # Create a random series with the desired proportions
-    test_train = pd.Series(np.random.choice([0, 1], size=df_len, p=proportions))
+    # Create a list with size_train 0s and (df_len - size_train) 1s
+    assignment_list = [0]*size_train + [1]*(df_len - size_train)
+    
+    # Shuffle the list
+    np.random.shuffle(assignment_list)
+    
+    # Convert the list to a pandas Series
+    test_train = pd.Series(assignment_list)
 
     return test_train

@@ -1,9 +1,10 @@
-import pandas as pd
-import click
-import os
 import logging
-from rdkit.Chem import MolFromSmiles, AllChem
+import os
+
+import click
 import duckdb
+import pandas as pd
+from rdkit.Chem import AllChem, MolFromSmiles
 
 
 def smiles_to_ecfp4(smiles_string, nBits):

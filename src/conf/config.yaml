@@ -1,0 +1,23 @@
+paths:
+  raw: ${hydra:runtime.cwd}/data/raw/
+  assay: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay/
+  assay_id: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay_id/
+  feature: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/feature/
+  model: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/model/
+  prediction: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/prediction/
+  score: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/score/
+
+files:
+  identifier: test
+  
+params:
+  dataset: toxcast
+  assay_size: 128
+  support_set_size: 32
+  feature: ecfp4_1024
+  model: logistic
+  test_prob: 0.05
+
+hydra:
+  sweep:
+    subdir: ${hydra.job.override_dirname}

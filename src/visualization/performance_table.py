@@ -1,7 +1,8 @@
-import duckdb
 import logging
-import click
 import os
+
+import click
+import duckdb
 import pandas as pd
 
 
