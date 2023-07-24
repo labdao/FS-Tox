@@ -77,8 +77,8 @@ def train(
         # Conduct test train split
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
-        if i < 5:
-            logger.info("conducting hyperparameter search for assay %d...", assay_id)
+        if i < 2:
+            logger.info("conducting hyperparameter search for assay %d...", i+1)
 
             # Conduct hyperparameter search
             best_params = param_search(X_train, y_train)
@@ -86,7 +86,7 @@ def train(
             # Add best_params to best_params_list
             best_params_list.append(best_params)
 
-        if i == 5:
+        if i == 2:
             # Use modal best_params for remaining assays
             tmp_params = {}
 
@@ -116,4 +116,4 @@ def train(
         with open(model_path, "wb") as f:
             pickle.dump(model, f)
 
-        logger.info(f"successfully trained {i+1} xgboost models.")
+        logger.info("successfully trained %d xgboost models.", i+1)

@@ -47,6 +47,12 @@ def main(cfg: AssayConfig) -> None:
     )
 
     # Generate features
+    if cfg.params.feature == "ecfp4_128":
+        ecfp4.generate(cfg.paths.assay, cfg.paths.feature, 128)
+    if cfg.params.feature == "ecfp4_256":
+        ecfp4.generate(cfg.paths.assay, cfg.paths.feature, 256)
+    if cfg.params.feature == "ecfp4_512":
+        ecfp4.generate(cfg.paths.assay, cfg.paths.feature, 512)
     if cfg.params.feature == "ecfp4_1024":
         ecfp4.generate(cfg.paths.assay, cfg.paths.feature, 1024)
     if cfg.params.feature == "ecfp4_2048":
