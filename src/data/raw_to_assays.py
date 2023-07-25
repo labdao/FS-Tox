@@ -5,6 +5,7 @@ import click
 import numpy as np
 import pandas as pd
 from rdkit import Chem, RDLogger
+from tdc.single_pred import Tox
 
 from .utils import (
     assign_test_train,
@@ -220,6 +221,71 @@ def process_prism(input_filepath):
 
     return df
 
+def process_acute_oral_toxicity():
+    # Load data
+    data = Tox(name = 'LD50_Zhu')
+    df = data.get_data()
+    df.drop(columns="Drug_ID", inplace=True)
+    df.rename(columns={"Drug": "smiles"}, inplace=True)
+    
+    # Change outcome column to negative log from positive log
+    df["Y"] = -df["Y"]
+    
+    # Set the SMILES column as the index
+    df.set_index("smiles", inplace=True)
+
+    # Keep assays where the order of magnitude outcome range is greater than 2
+    df = filter_by_range(df)
+
+    # Binarize the assays
+    df = binarize_assays(df)
+
+    # Convert smiles index to a column
+    df.reset_index(inplace=True)
+
+    return df
+
+def load_data(input_filepath, dataset, assay_size):
+    logger = logging.getLogger(__name__)
+    logger.info("converting %s raw data to individual assay parquet files...", dataset)
+
+    # Return DataFrame with binary outcomes for each assay and a lookup table
+    if dataset == "tox21":
+        return process_tox21(input_filepath)
+    elif dataset == "clintox":
+        return process_clintox(input_filepath)
+    elif dataset == "toxcast":
+        return process_toxcast(input_filepath)
+    elif dataset == "bbbp":
+        return process_bbbp(input_filepath)
+    elif dataset == "toxval":
+        return process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
+    elif dataset == "nci60":
+        return process_nci60(
+            input_filepath, "data/external/nci60_identifiers.txt", assay_size
+        )
+    elif dataset == "cancerrx":
+        return process_cancerrx(input_filepath)
+    elif dataset == "prism":
+        return process_prism(input_filepath)
+    elif dataset == "acute_oral_toxicity":
+        return process_acute_oral_toxicity()
+    else:
+        raise ValueError(
+            "dataset must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'."
+        )
+
+def preprocess_data(df, assay_size):
+     # Remove columns not in active ratio range
+    df = filter_by_active_ratio(df)
+
+    # Convert smiles to canonical_smiles
+    df = smiles_to_canonical_smiles(df)
+
+    # Remove columns with fewer non-null values than specified size
+    df = df.loc[:, (df.count() >= assay_size).values]
+
+    return df
 
 def convert_to_parquets(
     df, source_id, output_filepath, support_set_size, test_prob
@@ -281,41 +347,11 @@ def make_assays(
     support_set_size,
     test_prob,
 ):
-    logger = logging.getLogger(__name__)
-    logger.info("converting %s raw data to individual assay parquet files...", dataset)
+    # Load data 
+    df = load_data(input_filepath, dataset, assay_size)
 
-    # Return DataFrame with binary outcomes for each assay and a lookup table
-    if dataset == "tox21":
-        df = process_tox21(input_filepath)
-    elif dataset == "clintox":
-        df = process_clintox(input_filepath)
-    elif dataset == "toxcast":
-        df = process_toxcast(input_filepath)
-    elif dataset == "bbbp":
-        df = process_bbbp(input_filepath)
-    elif dataset == "toxval":
-        df = process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
-    elif dataset == "nci60":
-        df = process_nci60(
-            input_filepath, "data/external/nci60_identifiers.txt", assay_size
-        )
-    elif dataset == "cancerrx":
-        df = process_cancerrx(input_filepath)
-    elif dataset == "prism":
-        df = process_prism(input_filepath)
-    else:
-        raise ValueError(
-            "dataset must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'."
-        )
-
-    # Remove columns not in active ratio range
-    df = filter_by_active_ratio(df)
-
-    # Convert smiles to canonical_smiles
-    df = smiles_to_canonical_smiles(df)
-
-    # Remove columns with fewer non-null values than specified size
-    df = df.loc[:, (df.count() >= assay_size).values]
+    # Filter by active ratio, convert smiles to canonical_smiles, and remove columns with fewer non-null values than specified size
+    df = preprocess_data(df, assay_size)
 
     # Get assay names
     assay_components = [col for col in df.columns if col != "canonical_smiles"]

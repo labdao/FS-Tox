@@ -11,7 +11,7 @@ files:
   identifier: test
   
 params:
-  dataset: toxcast
+  dataset: acute_oral_toxicity
   assay_size: 128
   support_set_size: 32
   feature: ecfp4_1024
