@@ -1,11 +1,13 @@
 import logging
 import os
+from joblib import Memory
 
 import click
 import numpy as np
 import pandas as pd
 from rdkit import Chem, RDLogger
 from tdc.single_pred import Tox
+
 
 from .utils import (
     assign_test_train,
@@ -175,7 +177,7 @@ def process_cancerrx(input_filepath):
     df.rename(columns={"SMILES": "smiles"}, inplace=True)
 
     # Convert drug names to smiles
-    df = drug_name_to_smiles(df)
+    df = drug_name_to_smiles(df, "DRUG_NAME")
 
     # Set the assay components
     assay_components = ["CELL_LINE_NAME"]
@@ -245,10 +247,38 @@ def process_acute_oral_toxicity():
 
     return df
 
-def load_data(input_filepath, dataset, assay_size):
-    logger = logging.getLogger(__name__)
-    logger.info("converting %s raw data to individual assay parquet files...", dataset)
+def process_meic(input_filepath):
+    df = pd.read_csv(f"{input_filepath}/meic.csv")
 
+    # Remove molecular weight column
+    df.drop("Molecular weight", axis=1, inplace=True)
+
+    # Set the outcome column names
+    outcome_cols = ["Rat LD50 (log mol/kg)", "MouseLD50 (log mol/kg)" ,"Human lethal dose (log mol/kg)"]
+
+    # Convert log-ld50 to negative log-ld50
+    df[outcome_cols] = -df[outcome_cols]
+
+    # Get smiles from Chemical column
+    df = drug_name_to_smiles(df, "Chemical")
+
+    df.drop("Chemical", axis=1, inplace=True)
+
+    # Set smiles column as index
+    df.set_index("smiles", inplace=True)
+
+    # Remove columns where the absolute range is less than 2
+    df = filter_by_range(df)
+
+    # Binarize the assays
+    df = binarize_assays(df)
+
+    # Convert smiles index to a column
+    df.reset_index(inplace=True)
+
+    return df
+
+def load_data(input_filepath, dataset, identifier, assay_size):
     # Return DataFrame with binary outcomes for each assay and a lookup table
     if dataset == "tox21":
         return process_tox21(input_filepath)
@@ -259,10 +289,10 @@ def load_data(input_filepath, dataset, assay_size):
     elif dataset == "bbbp":
         return process_bbbp(input_filepath)
     elif dataset == "toxval":
-        return process_toxval(input_filepath, "data/external/toxval_identifiers.csv")
+        return process_toxval(input_filepath, f"{identifier}/toxval_identifiers.csv")
     elif dataset == "nci60":
         return process_nci60(
-            input_filepath, "data/external/nci60_identifiers.txt", assay_size
+            input_filepath, f"{identifier}/nci60_identifiers.txt", assay_size
         )
     elif dataset == "cancerrx":
         return process_cancerrx(input_filepath)
@@ -270,6 +300,8 @@ def load_data(input_filepath, dataset, assay_size):
         return process_prism(input_filepath)
     elif dataset == "acute_oral_toxicity":
         return process_acute_oral_toxicity()
+    elif dataset == "meic":
+        return process_meic(input_filepath)
     else:
         raise ValueError(
             "dataset must be one of 'tox21', 'clintox', 'toxcast', 'bbbp', 'toxval', 'nci60', 'cancerrx', or 'prism'."
@@ -347,8 +379,11 @@ def make_assays(
     support_set_size,
     test_prob,
 ):
+    logger = logging.getLogger(__name__)
+    logger.info("converting %s raw data to individual assay parquet files...", dataset)
+    
     # Load data 
-    df = load_data(input_filepath, dataset, assay_size)
+    df = load_data(input_filepath, dataset, identifier, assay_size)
 
     # Filter by active ratio, convert smiles to canonical_smiles, and remove columns with fewer non-null values than specified size
     df = preprocess_data(df, assay_size)

@@ -1,4 +1,4 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3 clean_cache
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -38,6 +38,10 @@ clean:
 	find . -type f -name "*_lookup.csv" -delete
 	rm -rf ./outputs
 	rm -rf ./multirun
+
+# Delete all cached files
+clean_cache:
+	rm -rf ./.assay_cache
 
 ## Lint using flake8
 lint:

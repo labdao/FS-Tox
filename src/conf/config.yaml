@@ -1,19 +1,19 @@
 paths:
   raw: ${hydra:runtime.cwd}/data/raw/
-  assay: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay/
-  assay_id: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/assay_id/
-  feature: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/feature/
-  model: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/model/
-  prediction: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/prediction/
-  score: ${hydra:sweep.dir}/${hydra:sweep.subdir}/data/processed/score/
+  assay: ./data/processed/assay/
+  assay_id: ./data/processed/assay_id/
+  feature: ./data/processed/feature/
+  model: ./data/processed/model/
+  prediction: ./data/processed/prediction/
+  score: ./data/processed/score/
 
 files:
-  identifier: test
+  identifier: ${hydra:runtime.cwd}/data/external
   
 params:
-  dataset: acute_oral_toxicity
-  assay_size: 128
-  support_set_size: 32
+  dataset: meic  
+  assay_size: 45
+  support_set_size: 24
   feature: ecfp4_1024
   model: logistic
   test_prob: 0.05
@@ -21,3 +21,8 @@ params:
 hydra:
   sweep:
     subdir: ${hydra.job.override_dirname}
+  sweeper:
+    params:
+      params.dataset: acute_oral_toxicity,nci60,toxcast,cancerrx,toxval,prism,meic
+  job:
+    chdir: True

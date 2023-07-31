@@ -95,3 +95,9 @@ jobs/
 
 # Mypy cache
 .mypy_cache/
+
+# Joblib cache
+.assay_cache/
+
+# Hydra config
+config.yaml

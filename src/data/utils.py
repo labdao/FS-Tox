@@ -6,18 +6,24 @@ import numpy as np
 import pandas as pd
 import requests
 from rdkit import Chem, RDLogger
+from joblib import Memory
 
 # Suppress RDKit warnings
 RDLogger.DisableLog("rdApp.*")
 
-def drug_name_to_smiles(df):
+ # Setup joblib caching configuration
+cache_dir = os.path.join(os.getcwd(), ".assay_cache")
+memory = Memory(cache_dir, verbose=0)
+
+@memory.cache
+def drug_name_to_smiles(df, drug_name_colname):
 
     base_url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
     
     smiles_dict = {}
 
     # Get the drug names from drug name col
-    drug_names = df["DRUG_NAME"].unique()  
+    drug_names = df[drug_name_colname].unique()  
 
     for drug_name in drug_names:
         url = f"{base_url}/compound/name/{drug_name}/property/IsomericSMILES/JSON"
@@ -41,7 +47,7 @@ def drug_name_to_smiles(df):
         time.sleep(0.2)
 
     # Add the smiles values as a new column
-    df['smiles'] = df['DRUG_NAME'].map(smiles_dict)
+    df['smiles'] = df[drug_name_colname].map(smiles_dict)
 
     # Remove rows where 'SMILES' is NaN
     df = df.dropna(subset=['smiles'])
