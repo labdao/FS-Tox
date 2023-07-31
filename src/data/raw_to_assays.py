@@ -1,6 +1,5 @@
 import logging
 import os
-from joblib import Memory
 
 import click
 import numpy as np

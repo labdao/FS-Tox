@@ -24,5 +24,6 @@ hydra:
   sweeper:
     params:
       params.dataset: acute_oral_toxicity,nci60,toxcast,cancerrx,toxval,prism,meic
+      params.feature: ecfp4_1024, chemberta
   job:
     chdir: True
