@@ -24,8 +24,6 @@ def main(cfg: AssayConfig) -> None:
         assay_size (int): The size of each assay.
         support_set_size (int): The size of the support set for each assay.
     """
-    # Change working directory to the directory for the run
-    print(os.getcwd())
         
     # Create pipeline directories in the outputs directory
     for _, value in cfg.paths.items():
@@ -78,7 +76,7 @@ def main(cfg: AssayConfig) -> None:
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
-            cfg.params.support_set_size,
+            cfg.xgboost
         )
 
     # Make predictions

@@ -3,6 +3,7 @@ import os
 import pickle
 import statistics
 
+import omegaconf
 import click
 import pandas as pd
 import xgboost as xgb
@@ -12,12 +13,12 @@ from .utils import (construct_query, load_assays, load_representations,
                     mod_test_train_split)
 
 
-def param_search(X_train, y_train):
+def param_search(X_train, y_train, xgboost_params):
     # Define the parameters for the XGBoost model
     param_grid = {
-        "max_depth": [3, 4, 5, 6, 7, 8, 9],
-        "gamma": [0.01, 0.1, 0.2, 0.5, 1, 2, 5],
-        "eta": [0.1, 0.2, 0.3, 0.4, 0.5],
+        "max_depth": omegaconf.OmegaConf.to_container(xgboost_params.max_depth),
+        "gamma": omegaconf.OmegaConf.to_container(xgboost_params.gamma),
+        "eta": omegaconf.OmegaConf.to_container(xgboost_params.eta),
     }
 
     # Check outcome imbalance - toxic(1) vs non-toxic(0)
@@ -48,7 +49,7 @@ def train(
     output_filepath,
     representation,
     dataset,
-    support_set_size,
+    xgboost_params
 ):
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -77,16 +78,18 @@ def train(
         # Conduct test train split
         X_train, _, y_train, _ = mod_test_train_split(merged_df)
 
-        if i < 2:
+        if i < 5:
             logger.info("conducting hyperparameter search for assay %d...", i+1)
 
             # Conduct hyperparameter search
-            best_params = param_search(X_train, y_train)
+            best_params = param_search(X_train, y_train, xgboost_params)
 
             # Add best_params to best_params_list
             best_params_list.append(best_params)
 
-        if i == 2:
+            logger.info(f"Best parameters found: {best_params}")
+
+        if i == 5:
             # Use modal best_params for remaining assays
             tmp_params = {}
 

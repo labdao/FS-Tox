@@ -11,19 +11,33 @@ files:
   identifier: ${hydra:runtime.cwd}/data/external
   
 params:
-  dataset: meic  
+  dataset: nci60  
   assay_size: 45
   support_set_size: 24
   feature: ecfp4_1024
-  model: logistic
+  model: xgboost
   test_prob: 0.05
+
+xgboost:
+  eta: 
+    - 0.01
+    - 0.1
+  gamma:
+    - 0.01
+    - 0.05
+    - 0.1
+  max_depth:
+    - 6
+    - 9
+    - 15
+    - 24
 
 hydra:
   sweep:
     subdir: ${hydra.job.override_dirname}
   sweeper:
     params:
-      params.dataset: acute_oral_toxicity,nci60,toxcast,cancerrx,toxval,prism,meic
       params.feature: ecfp4_1024, chemberta
+      params.model: xgboost, logistic
   job:
     chdir: True

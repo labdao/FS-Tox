@@ -4,12 +4,21 @@ transformers.logging.set_verbosity_error()  # Set transformers log level to ERRO
 
 import logging
 
+import os
 import click
 import duckdb
 import pandas as pd
 import torch
 
+from joblib import Memory
 
+
+
+ # Setup joblib caching configuration
+cache_dir = os.path.join(os.getcwd(), ".assay_cache")
+memory = Memory(cache_dir, verbose=0)
+
+@memory.cache
 def chemberta_encode(smiles_list):
     # Load pre-trained model and tokenizer
     tokenizer = transformers.AutoTokenizer.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
