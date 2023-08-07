@@ -87,8 +87,6 @@ def train(
             # Add best_params to best_params_list
             best_params_list.append(best_params)
 
-            logger.info(f"Best parameters found: {best_params}")
-
         if i == 5:
             # Use modal best_params for remaining assays
             tmp_params = {}
@@ -99,16 +97,15 @@ def train(
                         [d[key] for d in best_params_list]
                     )
                 except statistics.StatisticsError:
-                    logger.warn(
-                        f"Couldn't find a unique mode for key '{key}'. You might want to handle this case differently."
+                    logger.warning(
+                        "Couldn't find a unique mode for key '%d'. You might want to handle this case differently.", key
                     )
 
             best_params = tmp_params
 
-        logger.info(f"fitting model for assay {i+1}...")
+        logger.info("fitting model for assay %d...", i+1)
 
         # Train the XGBoost model with the best parameters
-        num_round = 20
         model = xgb.XGBClassifier(**best_params, eval_metric="logloss")
         model.fit(X_train, y_train)
 

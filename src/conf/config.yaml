@@ -12,8 +12,8 @@ files:
   
 params:
   dataset: nci60  
-  assay_size: 45
-  support_set_size: 24
+  assay_size: 128
+  support_set_size: 32
   feature: ecfp4_1024
   model: xgboost
   test_prob: 0.05
@@ -37,7 +37,8 @@ hydra:
     subdir: ${hydra.job.override_dirname}
   sweeper:
     params:
-      params.feature: ecfp4_1024, chemberta
-      params.model: xgboost, logistic
+      params.dataset: nci60, toxcast, meic, prism, toxval, cancerrx, acute_oral_toxicity
+      params.feature: ecfp4_256
+      params.model: logistic
   job:
     chdir: True

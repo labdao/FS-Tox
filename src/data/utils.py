@@ -15,7 +15,6 @@ RDLogger.DisableLog("rdApp.*")
 cache_dir = os.path.join(os.getcwd(), ".assay_cache")
 memory = Memory(cache_dir, verbose=0)
 
-@memory.cache
 def drug_name_to_smiles(df, drug_name_colname):
 
     base_url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
@@ -95,6 +94,7 @@ def filter_by_active_ratio(df: pd.DataFrame):
     return df
 
 
+@memory.cache
 def smiles_to_canonical_smiles(df):
     # Convert smiles to canonical smiles
     mol_objects = df["smiles"].apply(Chem.MolFromSmiles)

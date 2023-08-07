@@ -7,6 +7,12 @@ import pandas as pd
 from rdkit import Chem, RDLogger
 from tdc.single_pred import Tox
 
+from joblib import Memory
+
+# Setup joblib caching configuration
+cache_dir = os.path.join(os.getcwd(), ".assay_cache")
+memory = Memory(cache_dir, verbose=0)
+
 
 from .utils import (
     assign_test_train,
@@ -20,7 +26,7 @@ from .utils import (
     smiles_to_canonical_smiles,
 )
 
-
+@memory.cache
 def process_tox21(input_filepath):
     """Process the tox21 dataset."""
     df = pd.read_csv(f"{input_filepath}/tox21.csv")
@@ -30,21 +36,21 @@ def process_tox21(input_filepath):
 
     return df
 
-
+@memory.cache
 def process_clintox(input_filepath):
     """Process the clintox dataset."""
     df = pd.read_csv(f"{input_filepath}/clintox.csv")
 
     return df
 
-
+@memory.cache
 def process_toxcast(input_filepath):
     """Process the toxcast dataset."""
     df = pd.read_csv(f"{input_filepath}/toxcast.csv")
 
     return df
 
-
+@memory.cache
 def process_bbbp(input_filepath):
     """Process the bbbp dataset."""
     df = pd.read_csv(f"{input_filepath}/bbbp.csv")
@@ -56,6 +62,7 @@ def process_bbbp(input_filepath):
     return df
 
 
+@memory.cache
 def process_toxval(input_filepath, identifier):
     """Process the toxval dataset."""
 
@@ -133,6 +140,7 @@ def process_toxval(input_filepath, identifier):
     return df
 
 
+@memory.cache
 def process_nci60(input_filepath, identifier_filepath, assay_size):
     df = pd.read_csv(f"{input_filepath}/nci60.csv")
 
@@ -169,6 +177,7 @@ def process_nci60(input_filepath, identifier_filepath, assay_size):
     return df
 
 
+@memory.cache
 def process_cancerrx(input_filepath):
     df = pd.read_excel(f"{input_filepath}/cancerrx.xlsx")
 
@@ -199,6 +208,7 @@ def process_cancerrx(input_filepath):
     return df
 
 
+@memory.cache
 def process_prism(input_filepath):
     df = pd.read_csv(f"{input_filepath}/prism.csv", dtype={14: str, 15: str})
 
@@ -222,6 +232,8 @@ def process_prism(input_filepath):
 
     return df
 
+
+@memory.cache
 def process_acute_oral_toxicity():
     # Load data
     data = Tox(name = 'LD50_Zhu')
@@ -246,6 +258,8 @@ def process_acute_oral_toxicity():
 
     return df
 
+
+@memory.cache
 def process_meic(input_filepath):
     df = pd.read_csv(f"{input_filepath}/meic.csv")
 
