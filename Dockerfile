@@ -11,7 +11,7 @@ RUN apt-get update -y && apt-get upgrade -y
 RUN pip install --no-cache-dir pandas xgboost duckdb click pyarrow transformers ipykernel matplotlib seaborn openai scikit-learn rdkit selfies numpy torch
 
 # Copy all the files to the container
-COPY src /app/src
+COPY . /app/
 
 # Run the application:
 CMD ["bash"]
