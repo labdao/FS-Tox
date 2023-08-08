@@ -6,6 +6,7 @@ class Paths:
     raw: str
     assay: str
     assay_id: str
+    task: str
     feature: str
     model: str
     prediction: str
@@ -22,7 +23,9 @@ class Params:
     support_set_size: int
     feature: str
     model: str
-    test_prob: float
+    model_size: str
+    meta_id: str
+    model_size: str
 
 @dataclass
 class XGBoostParams:

@@ -5,6 +5,7 @@ import hydra
 
 from config import AssayConfig
 from data.raw_to_assays import make_assays
+from data.assays_to_tasks import make_tasks
 from features import chemberta, chemgpt, ecfp4
 from models import logistic_fit, xgboost_fit
 from models.evaluate import evaluate_predictions
@@ -38,10 +39,15 @@ def main(cfg: AssayConfig) -> None:
         cfg.paths.assay,
         cfg.paths.assay_id,
         cfg.params.dataset,
+        cfg.params.meta_id,
         cfg.files.identifier,
-        cfg.params.assay_size,
-        cfg.params.support_set_size,
-        cfg.params.test_prob,
+        cfg.params.assay_size
+    )
+
+    # Create tasks from assays
+    make_tasks(
+        cfg.paths.assay,
+        cfg.paths.task
     )
 
     # Generate features
@@ -58,13 +64,13 @@ def main(cfg: AssayConfig) -> None:
     if cfg.params.feature == "chemberta":
         chemberta.generate(cfg.paths.assay, cfg.paths.feature)
     if cfg.params.feature == "chemgpt":
-        chemgpt.generate(cfg.paths.assay, cfg.paths.feature)
+        chemgpt.generate(cfg.paths.assay, cfg.paths.feature, cfg.params.model_size)
 
     # Train models
     if cfg.params.model == "logistic":
         logistic_fit.train(
             cfg.paths.feature,
-            cfg.paths.assay,
+            cfg.paths.task,
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
@@ -72,7 +78,7 @@ def main(cfg: AssayConfig) -> None:
     elif cfg.params.model == "xgboost":
         xgboost_fit.train(
             cfg.paths.feature,
-            cfg.paths.assay,
+            cfg.paths.task,
             cfg.paths.model,
             cfg.params.feature,
             cfg.params.dataset,
@@ -82,7 +88,7 @@ def main(cfg: AssayConfig) -> None:
     # Make predictions
     generate_predictions(
         cfg.paths.model,
-        cfg.paths.assay,
+        cfg.paths.task,
         cfg.paths.feature,
         cfg.paths.prediction,
         cfg.params.feature,
@@ -93,7 +99,7 @@ def main(cfg: AssayConfig) -> None:
     evaluate_predictions(
         cfg.paths.prediction,
         cfg.paths.score,
-        cfg.paths.assay,
+        cfg.paths.task,
     )
 
 

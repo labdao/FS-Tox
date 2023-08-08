@@ -1,7 +1,11 @@
+defaults:
+  - params/nci60
+
 paths:
   raw: ${hydra:runtime.cwd}/data/raw/
   assay: ./data/processed/assay/
   assay_id: ./data/processed/assay_id/
+  task: ./data/processed/task/
   feature: ./data/processed/feature/
   model: ./data/processed/model/
   prediction: ./data/processed/prediction/
@@ -11,12 +15,11 @@ files:
   identifier: ${hydra:runtime.cwd}/data/external
   
 params:
-  dataset: nci60  
   assay_size: 128
-  support_set_size: 32
-  feature: ecfp4_1024
-  model: xgboost
-  test_prob: 0.05
+  support_set_size: 16
+  feature: chemgpt
+  model_size: 4.7M
+  model: logistic
 
 xgboost:
   eta: 

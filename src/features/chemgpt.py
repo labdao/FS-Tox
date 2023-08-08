@@ -1,6 +1,7 @@
 import torch
 import transformers
 
+
 transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
 
 import logging
@@ -10,9 +11,16 @@ import duckdb
 import pandas as pd
 
 
-def chemgpt_encode(smiles):
-    tokenizer = transformers.AutoTokenizer.from_pretrained("ncfrey/ChemGPT-4.7M")
-    model = transformers.AutoModel.from_pretrained("ncfrey/ChemGPT-4.7M")
+def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
+    # Set model sizes
+    model_identifiers = {
+        "4.7M": "ncfrey/ChemGPT-4.7M",
+        "19M": "ncfrey/ChemGPT-19M",
+        "1.2B": "ncfrey/ChemGPT-1.2B",
+    }
+    # Load the model and tokenizer
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_identifiers[model_size])
+    model = transformers.AutoModel.from_pretrained(model_identifiers[model_size])
 
     # Adding a padding token
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
@@ -33,7 +41,7 @@ def chemgpt_encode(smiles):
     return average_embeddings
 
 
-def generate(input_filepath, output_filepath):
+def generate(input_filepath, output_filepath, model_size):
 
     log_fmt = "%(asctime)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
@@ -56,7 +64,7 @@ def generate(input_filepath, output_filepath):
     smiles_list = [x[0] for x in smiles]
 
     # Get the embeddings for each SMILES string
-    embeddings = chemgpt_encode(smiles_list)
+    embeddings = chemgpt_encode(smiles_list, model_size)
 
     # Convert tensor to list of lists (each sub-list is an embedding)
     embeddings_list = embeddings.numpy().tolist()

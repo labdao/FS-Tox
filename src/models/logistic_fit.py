@@ -47,10 +47,8 @@ def train(
             logger.info("Skipping model training for %s due to lack of classes.", assay_id)
             continue
 
-
         # Create a Logistic Regression object
         log_reg = LogisticRegression(max_iter=1000)
-
         
         # Fit the model to the training data
         log_reg.fit(X_train, y_train)
