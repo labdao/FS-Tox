@@ -131,7 +131,6 @@ def inchi_to_smiles(df: pd.DataFrame) -> pd.DataFrame:
 
 
 
-
 def pivot_assays(df, assay_components, outcome_col_name):
     # Create a new column that is a combination of the assay_components
     df["combined"] = df[assay_components].apply(
@@ -174,7 +173,7 @@ def get_sha256_snippet(input_string):
     return hashlib.sha256(input_string.encode()).hexdigest()[:15]
 
 
-def assign_test_train(df_len, size_train):
+def assign_test_train(df_len, size_train, seed=42):
     """
     Creates a pandas Series with random assignment of each row to test or train.
 
@@ -187,7 +186,7 @@ def assign_test_train(df_len, size_train):
     """
 
     # Set seed for reproducibility
-    np.random.seed(42)
+    np.random.seed(seed)
 
     # Create a list with size_train 0s and (df_len - size_train) 1s
     assignment_list = [0]*size_train + [1]*(df_len - size_train)

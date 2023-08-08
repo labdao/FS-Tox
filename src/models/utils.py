@@ -71,10 +71,10 @@ def mod_test_train_split(merged_df):
     y_train = merged_df.loc[merged_df["support_query"] == 0, "ground_truth"]
     y_test = merged_df.loc[merged_df["support_query"] == 1, "ground_truth"]
     X_train = merged_df.loc[merged_df["support_query"] == 0].drop(
-        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id"], axis=1
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id", "meta_id"], axis=1
     )
     X_test = merged_df.loc[merged_df["support_query"] == 1].drop(
-        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id"], axis=1
+        ["canonical_smiles", "ground_truth", "support_query", "assay_id", "assay_id", "meta_id"], axis=1
     )
 
     return X_train, X_test, y_train, y_test

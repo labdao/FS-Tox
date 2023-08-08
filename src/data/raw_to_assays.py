@@ -333,7 +333,7 @@ def preprocess_data(df, assay_size):
     return df
 
 def convert_to_parquets(
-    df, source_id, output_filepath, support_set_size, test_prob
+    df, source_id, meta_id, output_filepath
 ):
     """
     Converts an unprocessed DataFrame to individual parquet files for each assay.
@@ -363,9 +363,6 @@ def convert_to_parquets(
         assay_df.dropna(subset=[assay_id], inplace=True)
         assay_df.reset_index(drop=True, inplace=True)
 
-        # Randomly assign each row to train or test
-        assay_df["support_query"] = assign_test_train(len(assay_df), support_set_size)
-
         # Rename assay column label to 'ground_truth'
         assay_df.rename(columns={assay_id: "ground_truth"}, inplace=True)
 
@@ -378,6 +375,9 @@ def convert_to_parquets(
         # Add source_id column
         assay_df["source_id"] = source_id
 
+        # Add meta_id column
+        assay_df["meta_id"] = meta_id
+
         # Write each assay to a parquet file
         assay_df.to_parquet(f"{output_filepath}/{assay_id}.parquet")
 
@@ -387,10 +387,9 @@ def make_assays(
     output_filepath,
     assay_id_path,
     dataset,
+    meta_id,
     identifier,
     assay_size,
-    support_set_size,
-    test_prob,
 ):
     logger = logging.getLogger(__name__)
     logger.info("converting %s raw data to individual assay parquet files...", dataset)
@@ -423,7 +422,7 @@ def make_assays(
 
     # Convert the assay DataFrame to individual parquet files
     convert_to_parquets(
-        df, dataset, output_filepath, support_set_size, test_prob
+        df, dataset, meta_id, output_filepath
     )
 
     logger.info("created %d individual assay parquet files.", df.shape[1] - 1)
