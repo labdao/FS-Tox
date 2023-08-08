@@ -47,7 +47,8 @@ def main(cfg: AssayConfig) -> None:
     # Create tasks from assays
     make_tasks(
         cfg.paths.assay,
-        cfg.paths.task
+        cfg.paths.task,
+        cfg.params.support_set_sizes,
     )
 
     # Generate features

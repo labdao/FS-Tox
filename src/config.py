@@ -20,12 +20,13 @@ class Files:
 class Params:
     dataset: str
     assay_size: int
-    support_set_size: int
     feature: str
     model: str
     model_size: str
     meta_id: str
     model_size: str
+    support_set_sizes: list[int] = field(default_factory=list)
+
 
 @dataclass
 class XGBoostParams:
