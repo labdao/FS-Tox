@@ -7,7 +7,7 @@ from config import AssayConfig
 from data.raw_to_assays import make_assays
 from data.assays_to_tasks import make_tasks
 from features import chemberta, chemgpt, ecfp4
-from models import logistic_fit, xgboost_fit
+from models import logistic_fit, xgboost_fit, random_forest_fit
 from models.evaluate import evaluate_predictions
 from models.predict import generate_predictions
 
@@ -69,6 +69,15 @@ def main(cfg: AssayConfig) -> None:
     # Train models
     if cfg.params.model == "logistic":
         logistic_fit.train(
+            cfg.paths.feature,
+            cfg.paths.task,
+            cfg.paths.model,
+            cfg.params.feature,
+            cfg.params.dataset,
+        )
+        # Train models
+    elif cfg.params.model == "random-forest":
+        random_forest_fit.train(
             cfg.paths.feature,
             cfg.paths.task,
             cfg.paths.model,

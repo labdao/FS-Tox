@@ -17,9 +17,9 @@ files:
 params:
   assay_size: 128
   support_set_size: 16
-  feature: chemgpt
+  feature: ecfp4_1024
   model_size: 4.7M
-  model: logistic
+  model: xgboost
 
 xgboost:
   eta: 
@@ -33,7 +33,14 @@ xgboost:
     - 6
     - 9
     - 15
-    - 24
+  alpha:
+    - 0.01
+    - 0.1
+    - 1
+  lambda_:
+    - 0.01
+    - 0.1
+    - 1
 
 hydra:
   sweep:

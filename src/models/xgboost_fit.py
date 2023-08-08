@@ -19,6 +19,8 @@ def param_search(X_train, y_train, xgboost_params):
         "max_depth": omegaconf.OmegaConf.to_container(xgboost_params.max_depth),
         "gamma": omegaconf.OmegaConf.to_container(xgboost_params.gamma),
         "eta": omegaconf.OmegaConf.to_container(xgboost_params.eta),
+        "alpha": omegaconf.OmegaConf.to_container(xgboost_params.alpha),
+        "lambda": omegaconf.OmegaConf.to_container(xgboost_params.lambda_),
     }
 
     # Check outcome imbalance - toxic(1) vs non-toxic(0)

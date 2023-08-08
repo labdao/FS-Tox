@@ -99,5 +99,5 @@ jobs/
 # Joblib cache
 .assay_cache/
 
-# Hydra config
-config.yaml
+# Hydra configs
+*.yaml

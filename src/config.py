@@ -32,6 +32,8 @@ class XGBoostParams:
     eta: list[float] = field(default_factory=list)
     gamma: list[float] = field(default_factory=list)
     max_depth: list[int] = field(default_factory=list)
+    alpha: list[float] = field(default_factory=list)
+    lambda_: list[float] = field(default_factory=list)
 
 @dataclass
 class AssayConfig:

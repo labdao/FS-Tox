@@ -1,6 +1,7 @@
 import torch
 import transformers
-
+import os
+from joblib import Memory
 
 transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
 
@@ -10,7 +11,11 @@ import click
 import duckdb
 import pandas as pd
 
+# Setup joblib caching configuration
+cache_dir = os.path.join(os.getcwd(), ".assay_cache")
+memory = Memory(cache_dir, verbose=0)
 
+@memory.cache
 def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
     # Set model sizes
     model_identifiers = {
