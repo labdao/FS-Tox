@@ -1,3 +1,6 @@
+# defaults:
+#   - override hydra/launcher: joblib
+
 paths:
   raw: ${hydra:runtime.cwd}/data/raw/
   assay: ./data/processed/assay/
@@ -12,18 +15,14 @@ files:
   identifier: ${hydra:runtime.cwd}/data/external
   
 params:
-  dataset: nci60
+  dataset: meic
   meta_id: in-vitro
-  assay_size: 128
+  assay_size: 32
   support_set_sizes:
-    - 16
     - 32
-    - 64
-    - 128
-    - 256
-  feature: ecfp4_1024
+  feature: ecfp4_256
   model_size: 4.7M
-  model: xgboost
+  model: logistic
 
 xgboost:
   eta: 
@@ -51,7 +50,7 @@ hydra:
     subdir: ${hydra.job.override_dirname}
   sweeper:
     params:
-      params.dataset: nci60, toxcast, prism, toxval, cancerrx, acute_oral_toxicity
-      params.model: logistic
+      params.dataset: nci60, toxcast, prism, toxval, cancerrx, acute_oral_toxicity, meic
+      params.feature: ecfp4_1024, chemberta, chemgpt
   job:
     chdir: True

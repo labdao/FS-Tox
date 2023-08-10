@@ -42,7 +42,7 @@ def evaluate_predictions(input_filepath, output_filepath, assay_filepath):
                 f"{assay_filepath}/{assay_id}.parquet",
                 columns=["ground_truth", "support_query"],
             )
-            # Filter the ground truth data to only include the support query
+            # Filter the ground truth data to only include the query
             ratio_df = ratio_df[ratio_df["support_query"] == 1]
             # Calculate the delta AUC PR
             delta_auc = auc_pr - (ratio_df["ground_truth"].sum() / len(ratio_df))
@@ -56,6 +56,10 @@ def evaluate_predictions(input_filepath, output_filepath, assay_filepath):
 
         # Convert the dictionary to a dataframe
         metrics_df = pd.DataFrame(metrics_dict, index=[0])
+
+        # Add columns for support set size
+        support_set_size = assay_id.split("_")[1].split("-")[1]
+        metrics_df["support_set_size"] = support_set_size
 
         # Save inidividual assay metrics to a parquet file
         metrics_df.to_parquet(f"{output_filepath}/{assay_id}.parquet")

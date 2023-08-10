@@ -46,7 +46,7 @@ lint:
 ## Upload Data to S3
 sync_data_to_s3:
 ifeq (default,$(PROFILE))
-	aws s3 sync data/raw/ s3://$(BUCKET)/data/raw/
+	aws s3 sync data/ s3://$(BUCKET)/data/raw/
 else
 	aws s3 sync data/ s3://$(BUCKET)/data/ --profile $(PROFILE)
 endif
