@@ -24,6 +24,7 @@ from .utils import (
     inchi_to_smiles,
     pivot_assays,
     smiles_to_canonical_smiles,
+    check_canonical_smiles_to_selfies,
 )
 
 @memory.cache
@@ -326,6 +327,9 @@ def preprocess_data(df, assay_size):
 
     # Convert smiles to canonical_smiles
     df = smiles_to_canonical_smiles(df)
+
+    # Check if canonical_smiles can be converted to selfies
+    df = check_canonical_smiles_to_selfies(df)
 
     # Remove columns with fewer non-null values than specified size
     df = df.loc[:, (df.count() >= assay_size).values]

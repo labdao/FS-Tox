@@ -15,7 +15,7 @@ files:
   identifier: ${hydra:runtime.cwd}/data/external
   
 params:
-  dataset: meic
+  dataset: toxcast
   meta_id: in-vitro
   assay_size: 32
   support_set_sizes:

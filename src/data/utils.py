@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import requests
 from rdkit import Chem, RDLogger
+import selfies
 from joblib import Memory
 
 # Suppress RDKit warnings
@@ -198,3 +199,29 @@ def assign_test_train(df_len, size_train, seed=42):
     test_train = pd.Series(assignment_list)
 
     return test_train
+
+
+def check_canonical_smiles_to_selfies(df):
+    """
+    Checks if a canonical_smiles string can be converted to a selfies string. If not, this row is dropped from the DataFrame.
+    """
+
+    # Create mask for if a smiles string can be converted to a selfies string
+    def get_selfies_mask(smiles):
+        try:
+            selfies.encoder(smiles)
+            return True
+        except:
+            return False
+        
+    # Apply the mask to the DataFrame
+    valid_selfies_mask = df['canonical_smiles'].apply(get_selfies_mask)
+
+    # Remove rows from df with mask
+    return df[valid_selfies_mask]
+
+
+def convert_canonical_smiles_to_selfies(smiles_str):
+    # Convert SMILES to SELFIES
+    selfies_str = sf.encoder(smiles_str)
+    return selfies_str

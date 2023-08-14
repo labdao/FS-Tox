@@ -6,10 +6,11 @@ from joblib import Memory
 transformers.logging.set_verbosity_error()  # Set transformers log level to ERROR
 
 import logging
-
 import click
 import duckdb
 import pandas as pd
+
+from ..data.utils import convert_canonical_smiles_to_selfies
 
 # Setup joblib caching configuration
 cache_dir = os.path.join(os.getcwd(), ".assay_cache")
@@ -30,8 +31,11 @@ def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
     # Adding a padding token
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
+    # Convert SMILES to SELFIES
+    selfies = convert_canonical_smiles_to_selfies(smiles)
+
     # Encode the SMILES string
-    inputs = tokenizer(smiles, return_tensors="pt", padding=True, truncation=True)
+    inputs = tokenizer(selfies, return_tensors="pt", padding=True, truncation=True)
 
     # Feed the inputs to the model
     with torch.no_grad():  # disable gradient calculations to save memory
