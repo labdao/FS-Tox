@@ -223,5 +223,5 @@ def check_canonical_smiles_to_selfies(df):
 
 def convert_canonical_smiles_to_selfies(smiles_str):
     # Convert SMILES to SELFIES
-    selfies_str = sf.encoder(smiles_str)
+    selfies_str = selfies.encoder(smiles_str)
     return selfies_str
