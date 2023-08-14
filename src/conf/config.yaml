@@ -1,5 +1,5 @@
-# defaults:
-#   - override hydra/launcher: joblib
+defaults:
+  - override hydra/launcher: joblib
 
 paths:
   raw: ${hydra:runtime.cwd}/data/raw/
@@ -50,7 +50,9 @@ hydra:
     subdir: ${hydra.job.override_dirname}
   sweeper:
     params:
-      params.dataset: nci60, toxcast, prism, toxval, cancerrx, acute_oral_toxicity, meic
+      params.dataset: nci60, toxcast, prism, toxval, cancerrx, acute_oral_toxicity
       params.feature: ecfp4_1024, chemberta, chemgpt
   job:
     chdir: True
+  launcher:
+    n_jobs: 4
