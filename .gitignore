@@ -9,6 +9,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Finetuned models
+./models/
+
 # Configs
 multirun/
 

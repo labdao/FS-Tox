@@ -9,7 +9,7 @@ from data.assays_to_tasks import make_tasks
 from features import chemberta, chemgpt, ecfp4
 from models import logistic_fit, xgboost_fit, random_forest_fit
 from models.evaluate import evaluate_predictions
-from models.predict import generate_predictions
+from models.predict_single_task import generate_predictions
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")

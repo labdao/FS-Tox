@@ -219,9 +219,3 @@ def check_canonical_smiles_to_selfies(df):
 
     # Remove rows from df with mask
     return df[valid_selfies_mask]
-
-
-def convert_canonical_smiles_to_selfies(smiles_str):
-    # Convert SMILES to SELFIES
-    selfies_str = selfies.encoder(smiles_str)
-    return selfies_str

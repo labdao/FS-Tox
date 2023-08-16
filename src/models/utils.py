@@ -2,6 +2,7 @@ import os
 
 import duckdb
 import pandas as pd
+import selfies as sf
 
 
 def construct_query(input_filepath, representation):
@@ -78,3 +79,8 @@ def mod_test_train_split(merged_df):
     )
 
     return X_train, X_test, y_train, y_test
+
+def convert_canonical_smiles_to_selfies(smiles_str):
+    # Convert SMILES to SELFIES
+    selfies_str = sf.encoder(smiles_str)
+    return selfies_str

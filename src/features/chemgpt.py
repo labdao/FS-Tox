@@ -9,12 +9,18 @@ import logging
 import click
 import duckdb
 import pandas as pd
-
-from ..data.utils import convert_canonical_smiles_to_selfies
+import selfies as sf
 
 # Setup joblib caching configuration
 cache_dir = os.path.join(os.getcwd(), ".assay_cache")
 memory = Memory(cache_dir, verbose=0)
+
+
+def convert_canonical_smiles_to_selfies(smiles_str):
+    # Convert SMILES to SELFIES
+    selfies_str = sf.encoder(smiles_str)
+    return selfies_str
+
 
 @memory.cache
 def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
