@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import Trainer, TrainingArguments
 import torch
 from sklearn.metrics import average_precision_score, accuracy_score
+from pathlib import Path
 
 from utils import convert_canonical_smiles_to_selfies
 
@@ -130,14 +131,21 @@ def finetune_on_tasks(run_dir, model_checkpoint, output_dir):
 # Set the tokenizer
 model_checkpoint = "ncfrey/ChemGPT-4.7M"
 
-# Set the path to the task folder
-run_dir = "/rds/general/user/ssh22/home/FS-Tox/outputs/2023-08-10/16-27-54/data/processed/task"
+# Set the path to the run folder
+dataset_dir = "/rds/general/user/ssh22/home/FS-Tox/outputs/2023-08-10/16-27-54/"
+
+# Get individual dataset folders for the multirun
+dataset_dirs = [os.path.join(dataset_dir, dataset) for dataset in os.listdir(dataset_dir) if dataset != "multirun.yaml"]
+
+dataset_dirs = [Path(dataset) / "data/processed/task" for dataset in dataset_dirs]
+
+datasets = set(["=".split(os.path.basename(dataset)[0]) for dataset in dataset_dirs])
 
 # Set the path for the output directory
 output_dir = "/rds/general/user/ssh22/home/FS-Tox/models/"
 
 time_start = time.time()
-finetune_on_tasks(run_dir, model_checkpoint, output_dir)
+finetune_on_tasks(dataset_dir, model_checkpoint, output_dir)
 
 time_end = time.time()
 

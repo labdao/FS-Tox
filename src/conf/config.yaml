@@ -54,7 +54,7 @@ hydra:
   sweeper:
     params:
       params.dataset: nci60, toxcast, prism, toxval, cancerrx, acute_oral_toxicity, meic
-      params.feature: ecfp4_1024, chemberta, chemgpt
+      params.feature: ecfp4_1024
   job:
     chdir: True
   launcher:
