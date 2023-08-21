@@ -10,7 +10,7 @@ __pycache__/
 *.so
 
 # Finetuned models
-./models/
+models/
 
 # Configs
 multirun/

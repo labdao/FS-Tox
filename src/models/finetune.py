@@ -131,24 +131,10 @@ def finetune_on_tasks(run_dir, model_checkpoint, output_dir):
 # Set the tokenizer
 model_checkpoint = "ncfrey/ChemGPT-4.7M"
 
-# Set the path to the run folder
-dataset_dir = "/rds/general/user/ssh22/home/FS-Tox/outputs/2023-08-10/16-27-54/"
+# Set the path for the task folder
+task_dir = Path("/rds/general/user/ssh22/home/FS-Tox/multirun/2023-08-16/15-09-01/params.dataset=toxcast,params.feature=ecfp4_1024/data/processed/task")
 
-# Get individual dataset folders for the multirun
-dataset_dirs = [os.path.join(dataset_dir, dataset) for dataset in os.listdir(dataset_dir) if dataset != "multirun.yaml"]
+# Set the path for the output directory 
+output_dir = "/rds/general/user/ssh22/home/FS-Tox/models/toxcast/"
 
-dataset_dirs = [Path(dataset) / "data/processed/task" for dataset in dataset_dirs]
-
-datasets = set(["=".split(os.path.basename(dataset)[0]) for dataset in dataset_dirs])
-
-# Set the path for the output directory
-output_dir = "/rds/general/user/ssh22/home/FS-Tox/models/"
-
-time_start = time.time()
-finetune_on_tasks(dataset_dir, model_checkpoint, output_dir)
-
-time_end = time.time()
-
-time_difference = time_end - time_start
-
-print(time_difference)
+finetune_on_tasks(task_dir, model_checkpoint, output_dir)
