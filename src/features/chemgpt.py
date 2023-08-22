@@ -21,7 +21,6 @@ def convert_canonical_smiles_to_selfies(smiles_str):
     selfies_str = sf.encoder(smiles_str)
     return selfies_str
 
-
 @memory.cache
 def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
     # Set model sizes
@@ -38,7 +37,7 @@ def chemgpt_encode(smiles: list, model_size: str) -> torch.Tensor:
     tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
     # Convert SMILES to SELFIES
-    selfies = convert_canonical_smiles_to_selfies(smiles)
+    selfies = [convert_canonical_smiles_to_selfies(smiles_str) for smiles_str in smiles]
 
     # Encode the SMILES string
     inputs = tokenizer(selfies, return_tensors="pt", padding=True, truncation=True)
